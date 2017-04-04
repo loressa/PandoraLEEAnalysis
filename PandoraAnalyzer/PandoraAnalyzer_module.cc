@@ -21,7 +21,7 @@
 
 //uncomment the lines below as you use these objects
 
-/*#include "lardataobj/RecoBase/PFParticle.h"
+#include "lardataobj/RecoBase/PFParticle.h"
 #include "lardataobj/RecoBase/Vertex.h"
 #include "lardataobj/RecoBase/Track.h"
 #include "lardataobj/RecoBase/Shower.h"
@@ -36,7 +36,7 @@
 #include "TTree.h"
 #include "TFile.h"
 #include "art/Framework/Services/Optional/TFileService.h"
-#include "PandoraAnalysis/PandoraAnalysis.hh"*/
+#include "PandoraAnalysis/PandoraAnalysis.hh"
 
 using namespace lar_pandora;
 
@@ -66,6 +66,9 @@ public:
 private:
 
   test::PandoraAnalysis fMyAnalysisObj;
+  TFile * myTFile;
+  TTree * myTTree;
+  bool         m_printDebug;   
 
 };
 
