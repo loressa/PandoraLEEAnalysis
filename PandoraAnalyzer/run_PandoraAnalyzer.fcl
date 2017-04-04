@@ -1,0 +1,58 @@
+#include "services_microboone.fcl"
+#include "detectorclocks_microboone.fcl"
+
+process_name : PandoraAnalyzer      #The process name must NOT contain any underscores
+
+source : {
+  module_type : RootInput
+  maxEvents   : -1
+}
+
+services : 
+{
+  scheduler:               { defaultExceptions: false }    # Make all uncaught exceptions fatal.	
+  TFileService: { fileName: "MyPandoraAnalyzer.root" }
+  TimeTracker:       {}
+  RandomNumberGenerator: {}
+  UBOpReadoutMap:           @local::microboone_opreadoutmap
+  DetectorClocksService:            @local::microboone_detectorclocks
+  DatabaseUtil:           @local::microboone_database
+
+  message:      @local::standard_info
+
+}
+
+outputs: {
+  optionalout: { module_type: RootOutput
+                 fileName: "output_file.root"
+                 fastCloning: false }
+}
+
+
+physics: {
+
+  producers : {
+     # ParameterSets for zero or more producer modules
+  }
+  analyzers: {
+     # ParameterSets for zero or more analyzer modules
+     myana: { module_type: PandoraAnalyzer
+              input_param: "optional" }     	      
+  }
+
+  filters : {
+     # ParameterSets for zero or more filter modules
+  }
+
+  path0 : [  myana ]
+
+  #path1 : [  comma separated list of module labels of analyzer or output modules  ]
+  #path2 : [  comma separated list of module labels of analyzer or output modules  ]
+  #path3 : [  comma separated list of module labels of analyzer or output modules  ]
+
+  #here, just a shorthand: could have done ana: [ myana ] then end_paths: [ ana ]
+  end_paths: [ path0 ]
+
+}
+services.DetectorClocksService.InheritClockConfig:                                   false
+services.DetectorClocksService.TriggerOffsetTPC:                                     -0.400e3
