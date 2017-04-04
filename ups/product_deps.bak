@@ -1,7 +1,7 @@
 # The parent line must be the first non-comment line in the file
 # This line defines the product name and version
-parent mypandoraanalysis v00_01_00
-defaultqual e9
+parent pandoraanalysis v00_01_00
+defaultqual e10
 #
 fcldir product_dir job
 #
@@ -15,9 +15,9 @@ end_product_list
   
 # e9  - with gcc 4.9.3 and -std=c++14
 qualifier	larsim		gcc	notes
-e9:debug	e9:debug	-nq-
-e9:opt		e9:opt		-nq-
-e9:prof		e9:prof		-nq-
+e10:debug	e9:debug	-nq-
+e10:opt		e9:opt		-nq-
+e10:prof	e9:prof		-nq-
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:
