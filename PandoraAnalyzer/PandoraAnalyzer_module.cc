@@ -6,7 +6,11 @@
 // Generated at Thu Jun 23 00:24:52 2016 by Lorena Escudero Sanchez using artmod
 // from cetpkgsupport v1_10_02.
 ////////////////////////////////////////////////////////////////////////
-// Holaaaa
+
+// TODO
+// - Put electron_energy_threshold and proton_energy_threshold as fcl parameters
+//
+
 #include <fstream>
 
 #include "art/Framework/Core/EDAnalyzer.h"
@@ -168,6 +172,12 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
       }
 
     }
+  }
+
+  double nu_energy = generator[0].GetNeutrino().Nu().E();
+
+  if (is_electron && !is_pion && protons == 1 && nu_energy > 0.2) {
+    std::cout << "CCQE 1e1p event" << std::endl;
   }
 
 
