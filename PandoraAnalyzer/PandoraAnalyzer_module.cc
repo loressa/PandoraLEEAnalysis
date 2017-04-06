@@ -47,6 +47,14 @@ namespace test {
   class PandoraAnalyzer;
 }
 
+double x_start = 0;
+double x_end = 256.35;
+double y_start = -116.5;
+double y_end = 116.5;
+double z_start = 0;
+double z_end = 1036.8;
+double fidvol = 10;
+
 bool is_fiducial(double x[3], double d) {
   bool is_x = x[0] > (x_start+d) && x[0] < (x_end-d);
   bool is_y = x[1] > (y_start+d) && x[1] < (y_end-d);
@@ -76,6 +84,7 @@ private:
   test::PandoraAnalysis fMyAnalysisObj;
   TFile * myTFile;
   TTree * myTTree;
+  TEfficiency * e_energy;
   bool         m_printDebug;
 
 };
@@ -135,6 +144,8 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
   int protons = 0;
   bool is_pion = false;
   bool is_electron = false;
+  double proton_energy_threshold = 0.06;
+  double electron_energy_threshold = 0.035;
 
   for (auto& mcparticle: nu_mcparticles) {
     if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and mcparticle.StatusCode() == 1) {
@@ -144,13 +155,12 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
       if (mcparticle.PdgCode() == 2212 && (mcparticle.E()-mcparticle.Mass()) > proton_energy_threshold && is_fiducial(position,fidvol) && is_fiducial(end_position,fidvol)) {
         protons++;
-        proton_energy = max(mcparticle.E()-mcparticle.Mass(), proton_energy);
+        proton_energy = std::max(mcparticle.E()-mcparticle.Mass(), proton_energy);
       }
 
       if (mcparticle.PdgCode() == 11 && (mcparticle.E()-mcparticle.Mass()) > electron_energy_threshold && is_fiducial(position,fidvol)) {
-        copy(begin(position), end(position), begin(electron_position));
         is_electron = true;
-        electron_energy = max(mcparticle.E()-mcparticle.Mass(), electron_energy);
+        electron_energy = std::max(mcparticle.E()-mcparticle.Mass(), electron_energy);
       }
 
       if (mcparticle.PdgCode() == 211 || mcparticle.PdgCode() == 111) {
