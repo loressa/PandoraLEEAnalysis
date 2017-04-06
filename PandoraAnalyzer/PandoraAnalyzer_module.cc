@@ -185,44 +185,46 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
     int tracks = 0;
 
     try {
-      auto const& pfparticle_handle = ev.getValidHandle< vector< recob::PFParticle > >( pandoraNu_tag );
+      auto const& pfparticle_handle = ev.getValidHandle< vector< recob::PFParticle > >( "pandoraNu" );
       auto const& pfparticles(*pfparticle_handle);
 
       for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
+        bool is_neutrino = abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary();
 
-        // Is a nu_e PFParticle?
-        if (abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary()) {
+        // Is a nu_e or nu_mu PFParticle?
+        if (!is_neutrino) continue;
 
-          double neutrino_vertex[3];
+        double neutrino_vertex[3];
 
-          auto const& neutrino_vertex_obj = vertex_per_pfpart.at(ipf);
-          neutrino_vertex_obj->XYZ(neutrino_vertex); // PFParticle neutrino vertex coordinates
+        auto const& neutrino_vertex_obj = vertex_per_pfpart.at(ipf);
+        neutrino_vertex_obj->XYZ(neutrino_vertex); // PFParticle neutrino vertex coordinates
 
-          closest_distance = min(distance(neutrino_vertex,correct_neutrino_vertex),closest_distance);
-          //cout << pfparticles[ipf].PdgCode() << " " << distance(neutrino_vertex,correct_neutrino_vertex) << endl;
+        // Is the vertex within fiducial volume?
+        if (!is_fiducial(neutrino_vertex)) continue;
 
-          // Loop over the neutrino daughters and check if there is a shower and a track
-          for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
+        closest_distance = min(distance(neutrino_vertex,correct_neutrino_vertex),closest_distance);
+        //cout << pfparticles[ipf].PdgCode() << " " << distance(neutrino_vertex,correct_neutrino_vertex) << endl;
 
-            auto const& daughter_vertex_obj = vertex_per_pfpart.at(pfdaughter);
-            double daughter_vertex[3];
-            daughter_vertex_obj->XYZ(daughter_vertex);
-            double distance_daugther = distance(neutrino_vertex,daughter_vertex);
+        // Loop over the neutrino daughters and check if there is a shower and a track
+        for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
 
-            if (pfparticles[pfdaughter].PdgCode() == 11) {
-              reco_shower = true;
-              showers++;
-            }
+          auto const& daughter_vertex_obj = vertex_per_pfpart.at(pfdaughter);
+          double daughter_vertex[3];
+          daughter_vertex_obj->XYZ(daughter_vertex);
+          double distance_daugther = distance(neutrino_vertex,daughter_vertex);
 
-            if (pfparticles[pfdaughter].PdgCode() == 13) {
-              reco_track = true;
-              tracks++;
-            }
+          if (pfparticles[pfdaughter].PdgCode() == 11) {
+            reco_shower = true;
+            showers++;
+          }
 
-          } // end for pfparticle daughters
+          if (pfparticles[pfdaughter].PdgCode() == 13) {
+            reco_track = true;
+            tracks++;
+          }
 
+        } // end for pfparticle daughters
 
-        } // end if pfparticle neutrino
 
       } // end for pfparticles
 
