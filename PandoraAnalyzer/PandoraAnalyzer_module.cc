@@ -35,6 +35,8 @@
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "nusimdata/SimulationBase/MCParticle.h"
 #include "canvas/Persistency/Common/FindOneP.h"
+#include "canvas/Utilities/InputTag.h"
+
 #include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
 
 #include "TTree.h"
@@ -142,8 +144,11 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 {
 
   //do the analysis
+  art::InputTag pandoraNu_tag { "pandoraNu" };
+  art::InputTag generator_tag { "generator" };
 
-  auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( "generator" );
+
+  auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( generator_tag );
   auto const& generator(*generator_handle);
 
   std::vector<simb::MCParticle> nu_mcparticles;
@@ -195,10 +200,10 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
     int tracks = 0;
 
     try {
-      auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( "pandoraNu" );
+      auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
       auto const& pfparticles(*pfparticle_handle);
 
-      art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, ev, pandoraNu_tag);
+      art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
 
 
       for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
@@ -224,10 +229,10 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
         // Loop over the neutrino daughters and check if there is a shower and a track
         for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
 
-          auto const& daughter_vertex_obj = vertex_per_pfpart.at(pfdaughter);
-          double daughter_vertex[3];
-          daughter_vertex_obj->XYZ(daughter_vertex);
-          double distance_daugther = distance(neutrino_vertex,daughter_vertex);
+          // auto const& daughter_vertex_obj = vertex_per_pfpart.at(pfdaughter);
+          // double daughter_vertex[3];
+          // daughter_vertex_obj->XYZ(daughter_vertex);
+          // double distance_daugther = distance(neutrino_vertex,daughter_vertex);
 
           if (pfparticles[pfdaughter].PdgCode() == 11) {
             reco_shower = true;
