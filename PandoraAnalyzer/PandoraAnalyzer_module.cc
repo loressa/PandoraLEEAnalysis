@@ -35,6 +35,7 @@
 
 #include "TTree.h"
 #include "TFile.h"
+#include "TEfficiency.h"
 #include "art/Framework/Services/Optional/TFileService.h"
 #include "PandoraAnalysis/PandoraAnalysis.hh"
 
@@ -44,6 +45,13 @@ namespace geo { class Geometry; }
 
 namespace test {
   class PandoraAnalyzer;
+}
+
+bool is_fiducial(double x[3], double d) {
+  bool is_x = x[0] > (x_start+d) && x[0] < (x_end-d);
+  bool is_y = x[1] > (y_start+d) && x[1] < (y_end-d);
+  bool is_z = x[2] > (z_start+d) && x[2] < (z_end-d);
+  return is_x && is_y && is_z;
 }
 
 class test::PandoraAnalyzer : public art::EDAnalyzer {
@@ -84,6 +92,9 @@ test::PandoraAnalyzer::PandoraAnalyzer(fhicl::ParameterSet const & pset)
   myTFile = new TFile("PandoraAnalyzerOutput.root", "RECREATE");
   myTTree = tfs->make<TTree>("pandoratree","PandoraAnalysis Tree");
 
+  e_energy = tfs->make<TEfficiency>("e_energy",";#nu_{e} energy [GeV];",30,0,3);
+
+
   //add branches
 
 
@@ -111,13 +122,44 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
   auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( "generator" );
   auto const& generator(*generator_handle);
-  
+
   std::vector<simb::MCParticle> nu_mcparticles;
   for (int i = 0; i < generator[0].NParticles(); i++) {
     if (generator[0].Origin() == 1) {
       nu_mcparticles.push_back(generator[0].GetParticle(i));
     }
   }
+
+  double proton_energy = 0;
+  double electron_energy = 0;
+  int protons = 0;
+  bool is_pion = false;
+  bool is_electron = false;
+
+  for (auto& mcparticle: nu_mcparticles) {
+    if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and mcparticle.StatusCode() == 1) {
+
+      double position[3] = {mcparticle.Position().X(),mcparticle.Position().Y(),mcparticle.Position().Z()};
+      double end_position[3] = {mcparticle.EndPosition().X(),mcparticle.EndPosition().Y(),mcparticle.EndPosition().Z()};
+
+      if (mcparticle.PdgCode() == 2212 && (mcparticle.E()-mcparticle.Mass()) > proton_energy_threshold && is_fiducial(position,fidvol) && is_fiducial(end_position,fidvol)) {
+        protons++;
+        proton_energy = max(mcparticle.E()-mcparticle.Mass(), proton_energy);
+      }
+
+      if (mcparticle.PdgCode() == 11 && (mcparticle.E()-mcparticle.Mass()) > electron_energy_threshold && is_fiducial(position,fidvol)) {
+        copy(begin(position), end(position), begin(electron_position));
+        is_electron = true;
+        electron_energy = max(mcparticle.E()-mcparticle.Mass(), electron_energy);
+      }
+
+      if (mcparticle.PdgCode() == 211 || mcparticle.PdgCode() == 111) {
+        is_pion = true;
+      }
+
+    }
+  }
+
 
 }
 
