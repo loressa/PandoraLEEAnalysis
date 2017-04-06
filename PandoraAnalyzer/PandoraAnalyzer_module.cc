@@ -194,8 +194,6 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
   if (is_electron && !is_pion && protons == 1 && nu_energy > 0.2) {
     std::cout << "CCQE 1e1p event" << std::endl;
 
-    bool reco_shower = false;
-    bool reco_track = false;
     int showers = 0;
     int tracks = 0;
 
@@ -235,12 +233,10 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
           // double distance_daugther = distance(neutrino_vertex,daughter_vertex);
 
           if (pfparticles[pfdaughter].PdgCode() == 11) {
-            reco_shower = true;
             showers++;
           }
 
           if (pfparticles[pfdaughter].PdgCode() == 13) {
-            reco_track = true;
             tracks++;
           }
 
