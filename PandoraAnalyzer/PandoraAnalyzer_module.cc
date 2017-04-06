@@ -109,7 +109,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
   //do the analysis
 
-  auto const& generator_handle = ev.getValidHandle< std::vector< simb::MCTruth > >( "generator" );
+  auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( "generator" );
 
 
 }
