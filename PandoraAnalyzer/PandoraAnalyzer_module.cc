@@ -200,7 +200,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
       for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
 
-        bool is_neutrino = abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary();
+        bool is_neutrino = (abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary();
 
         // Is a nu_e or nu_mu PFParticle?
         if (!is_neutrino) continue;
@@ -213,7 +213,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
         neutrino_vertex_obj->XYZ(neutrino_vertex); // PFParticle neutrino vertex coordinates
 
         // Is the vertex within fiducial volume?
-        if (!is_fiducial(neutrino_vertex)) continue;
+        if (!is_fiducial(neutrino_vertex, fidvol)) continue;
 
         closest_distance = std::min(distance(neutrino_vertex,correct_neutrino_vertex),closest_distance);
         //cout << pfparticles[ipf].PdgCode() << " " << distance(neutrino_vertex,correct_neutrino_vertex) << endl;
