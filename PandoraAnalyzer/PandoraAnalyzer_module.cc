@@ -68,7 +68,7 @@ private:
   test::PandoraAnalysis fMyAnalysisObj;
   TFile * myTFile;
   TTree * myTTree;
-  bool         m_printDebug;   
+  bool         m_printDebug;
 
 };
 
@@ -78,12 +78,12 @@ test::PandoraAnalyzer::PandoraAnalyzer(fhicl::ParameterSet const & pset)
   EDAnalyzer(pset)  // ,
  // More initializers here.
 {
-  
+
   //create output tree
   art::ServiceHandle<art::TFileService> tfs;
   myTFile = new TFile("PandoraAnalyzerOutput.root", "RECREATE");
-  myTTree = tfs->make<TTree>("pandoratree","PandoraAnalysis Tree"); 
-  
+  myTTree = tfs->make<TTree>("pandoratree","PandoraAnalysis Tree");
+
   //add branches
 
 
@@ -108,6 +108,9 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 {
 
   //do the analysis
+
+  auto const& generator_handle = ev.getValidHandle< std::vector< simb::MCTruth > >( "generator" );
+
 
 }
 
