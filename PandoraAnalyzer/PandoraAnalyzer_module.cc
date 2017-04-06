@@ -66,6 +66,16 @@ bool is_fiducial(double x[3], double d) {
   return is_x && is_y && is_z;
 }
 
+double distance(double a[3], double b[3]) {
+  double d = 0;
+
+  for (int i = 0; i < 3; i++) {
+    d += pow((a[i]-b[i]),2);
+  }
+
+  return sqrt(d);
+}
+
 class test::PandoraAnalyzer : public art::EDAnalyzer {
 public:
   explicit PandoraAnalyzer(fhicl::ParameterSet const & pset);
@@ -185,7 +195,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
     int tracks = 0;
 
     try {
-      auto const& pfparticle_handle = ev.getValidHandle< vector< recob::PFParticle > >( "pandoraNu" );
+      auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( "pandoraNu" );
       auto const& pfparticles(*pfparticle_handle);
 
       for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
