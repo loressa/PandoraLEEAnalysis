@@ -223,7 +223,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
         // Is the vertex within fiducial volume?
         if (!is_fiducial(neutrino_vertex, fidvol)) continue;
 
-        closest_distance = std::min(distance(neutrino_vertex,correct_neutrino_vertex),closest_distance);
+        closest_distance = std::min(distance(neutrino_vertex,neutrino_vertex),closest_distance);
         //cout << pfparticles[ipf].PdgCode() << " " << distance(neutrino_vertex,correct_neutrino_vertex) << endl;
 
         // Loop over the neutrino daughters and check if there is a shower and a track
