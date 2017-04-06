@@ -183,7 +183,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
       auto const& shower_handle = evt.getValidHandle< std::vector< recob::Shower > >( "pandoraNu" );
       auto const& showers(*shower_handle);
       for (size_t ish = 0; ish < showers.size(); ish++) {
-        std::cout << showers[ish].Energy() << std::endl;
+        std::cout << showers[ish].ShowerStart().X() << std::endl;
       }
 
     } catch (...) {
