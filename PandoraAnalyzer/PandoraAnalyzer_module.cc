@@ -8,8 +8,8 @@
 ////////////////////////////////////////////////////////////////////////
 
 // TODO
-// - Put electron_energy_threshold and proton_energy_threshold as fcl parameters
-//
+// - Put fidvol, electron_energy_threshold and proton_energy_threshold as fcl parameters
+// - Use Geometry service for TPC size
 
 #include <fstream>
 
@@ -178,6 +178,18 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
   if (is_electron && !is_pion && protons == 1 && nu_energy > 0.2) {
     std::cout << "CCQE 1e1p event" << std::endl;
+
+    try {
+      auto const& shower_handle = evt.getValidHandle< std::vector< recob::Shower > >( pandoraNu_tag );
+      auto const& showers(*shower_handle);
+      for (size_t ish = 0; ish < showers.size(); ish++) {
+        std::cout << showers[ish].Energy() << std::endl;
+      }
+
+    } catch (...) {
+      std::cout << "NO RECO DATA PRODUCTS" << std::endl;
+    }
+
   }
 
 
