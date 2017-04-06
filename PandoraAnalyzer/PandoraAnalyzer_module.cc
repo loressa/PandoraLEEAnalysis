@@ -110,7 +110,14 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
   //do the analysis
 
   auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( "generator" );
-
+  auto const& generator(*generator_handle);
+  
+  std::vector<simb::MCParticle> nu_mcparticles;
+  for (int i = 0; i < generator[0].NParticles(); i++) {
+    if (generator[0].Origin() == 1) {
+      nu_mcparticles.push_back(generator[0].GetParticle(i));
+    }
+  }
 
 }
 
