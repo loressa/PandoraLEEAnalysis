@@ -179,21 +179,64 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
   if (is_electron && !is_pion && protons == 1 && nu_energy > 0.2) {
     std::cout << "CCQE 1e1p event" << std::endl;
 
+    bool reco_shower = false;
+    bool reco_track = false;
+    int showers = 0;
+    int tracks = 0;
+
     try {
-      auto const& shower_handle = evt.getValidHandle< std::vector< recob::Shower > >( "pandoraNu" );
-      auto const& showers(*shower_handle);
-      for (size_t ish = 0; ish < showers.size(); ish++) {
-        std::cout << showers[ish].ShowerStart().X() << std::endl;
-      }
+      auto const& pfparticle_handle = ev.getValidHandle< vector< recob::PFParticle > >( pandoraNu_tag );
+      auto const& pfparticles(*pfparticle_handle);
+
+      for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
+
+        // Is a nu_e PFParticle?
+        if (abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary()) {
+
+          double neutrino_vertex[3];
+
+          auto const& neutrino_vertex_obj = vertex_per_pfpart.at(ipf);
+          neutrino_vertex_obj->XYZ(neutrino_vertex); // PFParticle neutrino vertex coordinates
+
+          closest_distance = min(distance(neutrino_vertex,correct_neutrino_vertex),closest_distance);
+          //cout << pfparticles[ipf].PdgCode() << " " << distance(neutrino_vertex,correct_neutrino_vertex) << endl;
+
+          // Loop over the neutrino daughters and check if there is a shower and a track
+          for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
+
+            auto const& daughter_vertex_obj = vertex_per_pfpart.at(pfdaughter);
+            double daughter_vertex[3];
+            daughter_vertex_obj->XYZ(daughter_vertex);
+            double distance_daugther = distance(neutrino_vertex,daughter_vertex);
+
+            if (pfparticles[pfdaughter].PdgCode() == 11) {
+              reco_shower = true;
+              showers++;
+            }
+
+            if (pfparticles[pfdaughter].PdgCode() == 13) {
+              reco_track = true;
+              tracks++;
+            }
+
+          } // end for pfparticle daughters
+
+
+        } // end if pfparticle neutrino
+
+      } // end for pfparticles
+
 
     } catch (...) {
       std::cout << "NO RECO DATA PRODUCTS" << std::endl;
     }
 
-  }
+    e_energy->Fill(showers == 1 && tracks == 1, nu_energy);
+
+  } // end CCQE if
 
 
-}
+} // end analyze function
 
 //------------------------------------------------------------------------------------------------------------------------------------
 
