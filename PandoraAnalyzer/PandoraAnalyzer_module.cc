@@ -189,10 +189,13 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
       auto const& pfparticles(*pfparticle_handle);
 
       for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
+
         bool is_neutrino = abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary();
 
         // Is a nu_e or nu_mu PFParticle?
         if (!is_neutrino) continue;
+
+        double closest_distance = std::numeric_limits<double>::max();
 
         double neutrino_vertex[3];
 
@@ -202,7 +205,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
         // Is the vertex within fiducial volume?
         if (!is_fiducial(neutrino_vertex)) continue;
 
-        closest_distance = min(distance(neutrino_vertex,correct_neutrino_vertex),closest_distance);
+        closest_distance = std::min(distance(neutrino_vertex,correct_neutrino_vertex),closest_distance);
         //cout << pfparticles[ipf].PdgCode() << " " << distance(neutrino_vertex,correct_neutrino_vertex) << endl;
 
         // Loop over the neutrino daughters and check if there is a shower and a track
