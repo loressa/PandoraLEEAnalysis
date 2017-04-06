@@ -34,7 +34,7 @@
 #include "lardataobj/MCBase/MCShower.h"
 #include "nusimdata/SimulationBase/MCTruth.h"
 #include "nusimdata/SimulationBase/MCParticle.h"
-
+#include "canvas/Persistency/Common/FindOneP.h"
 #include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
 
 #include "TTree.h"
@@ -197,6 +197,9 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
     try {
       auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( "pandoraNu" );
       auto const& pfparticles(*pfparticle_handle);
+
+      art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, ev, pandoraNu_tag);
+
 
       for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
 
