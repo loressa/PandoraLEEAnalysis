@@ -180,7 +180,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
     std::cout << "CCQE 1e1p event" << std::endl;
 
     try {
-      auto const& shower_handle = evt.getValidHandle< std::vector< recob::Shower > >( pandoraNu_tag );
+      auto const& shower_handle = evt.getValidHandle< std::vector< recob::Shower > >( "pandoraNu" );
       auto const& showers(*shower_handle);
       for (size_t ish = 0; ish < showers.size(); ish++) {
         std::cout << showers[ish].Energy() << std::endl;
