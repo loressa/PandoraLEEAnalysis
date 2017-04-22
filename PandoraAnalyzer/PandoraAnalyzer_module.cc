@@ -43,6 +43,9 @@
 
 #include "TTree.h"
 #include "TFile.h"
+#include "TH1F.h"
+#include "THStack.h"
+
 #include "TEfficiency.h"
 #include "art/Framework/Services/Optional/TFileService.h"
 #include "PandoraAnalysis/PandoraAnalysis.hh"
@@ -93,6 +96,7 @@ private:
   TH1F * h_dirt;
   TH1F * h_cosmic;
   TH1F * h_nc;
+  THStack * h_e_stacked;
 
 
   bool m_printDebug;
