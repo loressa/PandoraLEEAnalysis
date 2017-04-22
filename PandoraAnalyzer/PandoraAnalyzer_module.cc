@@ -325,10 +325,10 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
     } // end for pfparticles
 
-    double reco_energy = -1;
-    if (most_z_ipf != -1)  {
-      measure_energy(most_z_ipf, pfparticles, evt, reco_energy);
-    }
+    if (nu_candidates.size() == 0) return;
+
+    double reco_energy = 0;
+    measure_energy(most_z_ipf, pfparticles, evt, reco_energy);
     std::cout << "Energy " << reco_energy << std::endl;
 
     if (generator.size() > 0 && most_z_ipf != -1) {
@@ -356,7 +356,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
     }
   }
 
-  std::cout << "Category" << bkg_category << std::endl;
+  std::cout << "Category " << bkg_category << std::endl;
 
 
 } // end analyze function
