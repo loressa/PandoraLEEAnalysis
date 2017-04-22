@@ -194,13 +194,16 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
   int ccnc = -1;
   double true_neutrino_vertex[3];
   std::vector<simb::MCParticle> nu_mcparticles;
+  
   if (generator.size() > 0) {
     ccnc = generator[0].GetNeutrino().CCNC();
     if (ccnc == 1) {
       bkg_category = k_nc;
     }
 
-    true_neutrino_vertex[3] = {generator[0].GetNeutrino().Nu().Vx(),generator[0].GetNeutrino().Nu().Vy(),generator[0].GetNeutrino().Nu().Vz()};
+    true_neutrino_vertex[0] = generator[0].GetNeutrino().Nu().Vx();
+    true_neutrino_vertex[1] = generator[0].GetNeutrino().Nu().Vy();
+    true_neutrino_vertex[2] = generator[0].GetNeutrino().Nu().Vz();
 
     if (is_dirt(true_neutrino_vertex)) {
       bkg_category = k_dirt;
@@ -305,7 +308,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
       double reco_neutrino_vertex[3];
       vertex_obj->XYZ(reco_neutrino_vertex);
-      if (distance(reco_neutrino_vertex,true_neutrino_vertex)) > 10) {
+      if (distance(reco_neutrino_vertex,true_neutrino_vertex) > 10) {
         bkg_category = k_cosmic;
       }
     }
