@@ -99,8 +99,14 @@ private:
 
   double m_trackLength;
 
-  bool is_fiducial(double x[3]) const;
+  int k_cosmic = 1;
+  int k_nu_e = 2;
+  int k_nu_mu = 3;
+  int k_nc = 4;
+  int k_dirt = 5;
 
+  bool is_fiducial(double x[3]) const;
+  double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
 
 
@@ -139,6 +145,17 @@ test::PandoraAnalyzer::~PandoraAnalyzer()
   std::cout << "End!" << std::endl;
 }
 
+double test::PandoraAnalyzer::distance(double a[3], double b[3]) {
+  double d = 0;
+
+  for (int i = 0; i < 3; i++) {
+    d += pow((a[i]-b[i]),2);
+  }
+
+  return sqrt(d);
+}
+
+
 
 bool test::PandoraAnalyzer::is_fiducial(double x[3]) const
 {
@@ -171,27 +188,22 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
   art::InputTag generator_tag { "generator" };
 
   int bkg_category = 0;
-  // 1 cosmic
-  // 2 nu_e
-  // 3 nu_mu
-  // 4 NC
-  // 5 Dirt
 
   auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( generator_tag );
   auto const& generator(*generator_handle);
   int ccnc = -1;
-
+  double true_neutrino_vertex[3];
   std::vector<simb::MCParticle> nu_mcparticles;
   if (generator.size() > 0) {
     ccnc = generator[0].GetNeutrino().CCNC();
     if (ccnc == 1) {
-      bkg_category = 4;
+      bkg_category = k_nc;
     }
 
-    double true_neutrino_vertex[3] = {generator[0].GetNeutrino().Nu().Vx(),generator[0].GetNeutrino().Nu().Vy(),generator[0].GetNeutrino().Nu().Vz()};
-    std::cout << true_neutrino_vertex[0] << " " << true_neutrino_vertex[1] << " " << true_neutrino_vertex[2] << std::endl;
+    true_neutrino_vertex[3] = {generator[0].GetNeutrino().Nu().Vx(),generator[0].GetNeutrino().Nu().Vy(),generator[0].GetNeutrino().Nu().Vz()};
+
     if (is_dirt(true_neutrino_vertex)) {
-      bkg_category = 5;
+      bkg_category = k_dirt;
     }
 
     for (int i = 0; i < generator[0].NParticles(); i++) {
@@ -200,112 +212,117 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
       }
     }
   } else {
-    bkg_category = 1;
+    bkg_category = k_cosmic;
   }
 
+  int protons = 0;
+  int electrons = 0;
+  int muons = 0;
 
-  if (bkg_category != 1 && bkg_category != 5 && bkg_category != 4) {
-    int protons = 0;
-    int electrons = 0;
-    int muons = 0;
+  for (auto& mcparticle: nu_mcparticles) {
+    if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and mcparticle.StatusCode() == 1) {
 
-    for (auto& mcparticle: nu_mcparticles) {
-      if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and mcparticle.StatusCode() == 1) {
+      switch(mcparticle.PdgCode())
+      {
+        case (2212):
+        protons++;
+        break;
 
-        switch(mcparticle.PdgCode())
-        {
-          case (2212):
-          protons++;
-          break;
+        case (11):
+        electrons++;
+        break;
 
-          case (11):
-          electrons++;
-          break;
+        case (13):
+        muons++;
+        break;
+      }
 
-          case (13):
-          muons++;
-          break;
+    }
+  }
+
+  try {
+    auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
+    auto const& pfparticles(*pfparticle_handle);
+
+    int most_z_ipf = -1;
+    double most_z = -1;
+
+    for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
+
+      bool is_neutrino = (abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary();
+      if (!is_neutrino) continue;
+
+      int showers = 0;
+      int tracks = 0;
+      double longest_track_dir = 0;
+      double longest_track = 0;
+
+      for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
+
+        if (pfparticles[pfdaughter].PdgCode() == 11) {
+          art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+          auto const& shower_obj = shower_per_pfpart.at(pfdaughter);
+          bool contained_shower = false;
+          double start_point[3];
+          double end_point[3];
+
+          double shower_length = shower_obj->Length();
+          for (int ix = 0; ix < 3; ix++) {
+            start_point[ix] = shower_obj->ShowerStart()[ix];
+            end_point[ix] = shower_obj->ShowerStart()[ix]+shower_length*shower_obj->Direction()[ix];
+          }
+
+          contained_shower = is_fiducial(start_point) && is_fiducial(end_point);
+
+          if (contained_shower) showers++;
         }
 
+        if (pfparticles[pfdaughter].PdgCode() == 13) {
+          art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+          auto const& track_obj = track_per_pfpart.at(pfdaughter);
+
+          if (track_obj->Length() < m_trackLength) {
+            tracks++;
+            if (track_obj->Length() > longest_track) {
+              longest_track = track_obj->Length();
+              longest_track_dir = track_obj->StartDirection().Z();
+            }
+          }
+        }
+
+      } // end for pfparticle daughters
+
+      if (tracks >= 1 && showers >= 1 && longest_track_dir > most_z) {
+        most_z_ipf = ipf;
+        most_z = longest_track_dir;
+      }
+
+    } // end for pfparticles
+
+    if (generator.size() > 0 && most_z_ipf != -1) {
+      art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+      auto const& vertex_obj = vertex_per_pfpart.at(most_z_ipf);
+
+      double reco_neutrino_vertex[3];
+      vertex_obj->XYZ(reco_neutrino_vertex);
+      if (distance(reco_neutrino_vertex,true_neutrino_vertex)) > 10) {
+        bkg_category = k_cosmic;
       }
     }
 
+    std::cout << "Z IPF " << most_z << " " << most_z_ipf << std::endl;
 
-    try {
-      auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
-      auto const& pfparticles(*pfparticle_handle);
+  } catch (...) {
+    std::cout << "NO RECO DATA PRODUCTS" << std::endl;
+  }
 
-      int most_z_ipf = 0;
-      double most_z = -1;
-      double longest_track_dir = 0;
-
-      for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
-
-        bool is_neutrino = (abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary();
-        if (!is_neutrino) continue;
-
-        int showers = 0;
-        int tracks = 0;
-        longest_track_dir = 0;
-        double longest_track = 0;
-        
-        for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
-
-          if (pfparticles[pfdaughter].PdgCode() == 11) {
-            art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-            auto const& shower_obj = shower_per_pfpart.at(pfdaughter);
-            bool contained_shower = false;
-            double start_point[3];
-            double end_point[3];
-
-            double shower_length = shower_obj->Length();
-            for (int ix = 0; ix < 3; ix++) {
-              start_point[ix] = shower_obj->ShowerStart()[ix];
-              end_point[ix] = shower_obj->ShowerStart()[ix]+shower_length*shower_obj->Direction()[ix];
-            }
-
-            contained_shower = is_fiducial(start_point) && is_fiducial(end_point);
-
-            if (contained_shower) showers++;
-
-          }
-
-
-
-          if (pfparticles[pfdaughter].PdgCode() == 13) {
-            art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-            auto const& track_obj = track_per_pfpart.at(pfdaughter);
-            std::cout << "Track length " <<   track_obj->Length() << std::endl;
-            if (track_obj->Length() < m_trackLength) {
-              tracks++;
-              if (track_obj->Length() > longest_track) {
-                longest_track = track_obj->Length();
-                longest_track_dir = track_obj->StartDirection().Z();
-                std::cout << "Dir " << longest_track_dir << std::endl;
-              }
-            }
-          }
-
-        } // end for pfparticle daughters
-        std::cout << "TS " << tracks << " " << showers << std::endl;
-        if (tracks >= 1 && showers >= 1 && longest_track_dir > most_z) {
-          most_z_ipf = ipf;
-          most_z = longest_track_dir;
-        }
-
-      } // end for pfparticles
-      std::cout << "Z IPF " << most_z << " " << most_z_ipf << std::endl;
-
-    } catch (...) {
-      std::cout << "NO RECO DATA PRODUCTS" << std::endl;
-    }
-
+  if (bkg_category != k_cosmic && bkg_category != k_dirt && bkg_category != k_nc) {
     if (protons != 0 && electrons != 0) {
-      bkg_category = 2;
+      bkg_category = k_nu_e;
     } else if (protons != 0 && muons != 0) {
-      bkg_category = 3;
+      bkg_category = k_nu_mu;
     }
-  } // end bkg_category != 1 if
+  }
 
   std::cout << bkg_category << std::endl;
 
