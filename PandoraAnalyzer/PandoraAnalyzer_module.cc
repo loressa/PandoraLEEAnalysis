@@ -101,6 +101,7 @@ private:
 
   bool is_fiducial(double x[3]) const;
 
+  bool is_dirt(double x[3]) const;
 
 
 };
@@ -151,7 +152,16 @@ bool test::PandoraAnalyzer::is_fiducial(double x[3]) const
 }
 
 
+bool test::PandoraAnalyzer::is_dirt(double x[3]) const
+{
+  art::ServiceHandle<geo::Geometry> geo;
+  double bnd[6] = {0.,2.*geo->DetHalfWidth(),-geo->DetHalfHeight(),geo->DetHalfHeight(),0.,geo->DetLength()};
 
+  bool is_x = x[0] > bnd[0] && x[0] < bnd[1];
+  bool is_y = x[1] > bnd[2] && x[1] < bnd[3];
+  bool is_z = x[2] > bnd[4] && x[2] < bnd[5];
+  return !(is_x && is_y && is_z);
+}
 
 void test::PandoraAnalyzer::analyze(art::Event const & evt)
 {
@@ -180,7 +190,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
     double true_neutrino_vertex[3] = {generator[0].GetNeutrino().Nu().Vx(),generator[0].GetNeutrino().Nu().Vy(),generator[0].GetNeutrino().Nu().Vz()};
     std::cout << true_neutrino_vertex[0] << " " << true_neutrino_vertex[1] << " " << true_neutrino_vertex[2] << std::endl;
-    if (!is_fiducial(true_neutrino_vertex)) {
+    if (is_dirt(true_neutrino_vertex)) {
       bkg_category = 5;
     }
 
@@ -234,7 +244,6 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
         bool is_neutrino = (abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary();
         if (!is_neutrino) continue;
 
-
         int showers = 0;
         int tracks = 0;
 
@@ -276,7 +285,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
           }
 
         } // end for pfparticle daughters
-
+        std::cout << tracks << " " << showers << std::endl;
         if (tracks >= 1 && showers >= 1 && longest_track_dir > most_z) {
           most_z_ipf = ipf;
           most_z = longest_track_dir;
