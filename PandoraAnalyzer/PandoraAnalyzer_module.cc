@@ -269,7 +269,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
               tracks++;
               if (track_obj->Length() > longest_track) {
                 longest_track = track_obj->Length();
-                longest_track_dir = track_obj->StartDirection()->Z();
+                longest_track_dir = track_obj->StartDirection().Z();
               }
             }
           }
