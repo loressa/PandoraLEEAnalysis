@@ -146,7 +146,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
   std::vector<simb::MCParticle> nu_mcparticles;
   if (generator.size() > 0) {
-    double nu_energy = generator[0].GetNeutrino().Nu().E();
+    //double nu_energy = generator[0].GetNeutrino().Nu().E();
     ccnc = generator[0].GetNeutrino().CCNC();
     std::cout << ccnc << std::endl;
     for (int i = 0; i < generator[0].NParticles(); i++) {
@@ -193,10 +193,8 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
       }
     }
 
-
-
-    int showers = 0;
-    int tracks = 0;
+    // int showers = 0;
+    // int tracks = 0;
     //
     // try {
     //   std::cout <<
