@@ -329,6 +329,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
     if (most_z_ipf != -1)  {
       measure_energy(most_z_ipf, pfparticles, evt, reco_energy);
     }
+    std::cout << "Energy " << reco_energy << std::endl;
 
     if (generator.size() > 0 && most_z_ipf != -1) {
       art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
@@ -355,7 +356,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
     }
   }
 
-  std::cout << bkg_category << std::endl;
+  std::cout << "Category" << bkg_category << std::endl;
 
 
 } // end analyze function
