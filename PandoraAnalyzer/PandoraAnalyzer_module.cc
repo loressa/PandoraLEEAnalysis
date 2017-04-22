@@ -143,7 +143,7 @@ test::PandoraAnalyzer::PandoraAnalyzer(fhicl::ParameterSet const & pset)
   h_nu_mu = tfs->make<TH1F>("h_nu_mu",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV",30,0,3);
   h_dirt = tfs->make<TH1F>("h_dirt",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV",30,0,3);
 
-  h_e_stacked = tfs->make<TH1F>("h_e_stacked",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV");
+  h_e_stacked = tfs->make<THStack>("h_e_stacked",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV");
 
 
   //add branches
