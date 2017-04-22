@@ -163,6 +163,8 @@ void test::PandoraAnalyzer::measure_energy(size_t ipf, const std::vector<recob::
   auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
 
   art::FindManyP<recob::Shower > showers_per_pfparticle ( pfparticle_handle, evt, pandoraNu_tag );
+  std::vector<art::Ptr<recob::Shower>> showers = showers_per_pfparticle.at(ipf);
+
   for (auto const& shower: showers_per_pfparticle) {
     energy += shower.Energy();
   }
