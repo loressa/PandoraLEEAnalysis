@@ -108,7 +108,7 @@ private:
   bool is_fiducial(double x[3]) const;
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
-
+  void measure_energy(size_t ipf, const std::vector<recob::PFParticle> & pfparticles,nart::Event & evt);
 
 };
 
@@ -155,7 +155,21 @@ double test::PandoraAnalyzer::distance(double a[3], double b[3]) {
   return sqrt(d);
 }
 
+void test::PandoraAnalyzer::measure_energy(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, art::Event & evt, double & energy) {
 
+  art::InputTag pandoraNu_tag { "pandoraNu" };
+
+  auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
+
+  art::FindManyP<recob::Shower > showers_per_pfparticle ( pfparticle_handle, evt, pandoraNu_tag );
+  for (auto const& shower: showers_per_pfparticle) {
+    energy += shower.Energy();
+  }
+
+  for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
+    measure_energy(size_t pfdaughter, const std::vector<recob::PFParticle> & pfparticles, art::Event & evt, double &energy)
+  }
+}
 
 bool test::PandoraAnalyzer::is_fiducial(double x[3]) const
 {
@@ -194,7 +208,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
   int ccnc = -1;
   double true_neutrino_vertex[3];
   std::vector<simb::MCParticle> nu_mcparticles;
-  
+
   if (generator.size() > 0) {
     ccnc = generator[0].GetNeutrino().CCNC();
     if (ccnc == 1) {
@@ -301,6 +315,11 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
       }
 
     } // end for pfparticles
+
+    double reco_energy = -1;
+    if (most_z_ipf != -1)  {
+      measure_energy(most_z_ipf, pfparticles, evt, reco_energy)
+    }
 
     if (generator.size() > 0 && most_z_ipf != -1) {
       art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
