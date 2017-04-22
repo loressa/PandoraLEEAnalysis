@@ -88,6 +88,13 @@ private:
   TFile * myTFile;
   TTree * myTTree;
   TEfficiency * e_energy;
+  TH1F * h_nu_e;
+  TH1F * h_nu_mu;
+  TH1F * h_dirt;
+  TH1F * h_cosmic;
+  TH1F * h_nc;
+
+
   bool m_printDebug;
   double m_fidvolXstart;
   double m_fidvolXend;
@@ -125,7 +132,14 @@ test::PandoraAnalyzer::PandoraAnalyzer(fhicl::ParameterSet const & pset)
   myTFile = new TFile("PandoraAnalyzerOutput.root", "RECREATE");
   myTTree = tfs->make<TTree>("pandoratree","PandoraAnalysis Tree");
 
-  e_energy = tfs->make<TEfficiency>("e_energy",";#nu_{e} energy [GeV];",30,0,3);
+  e_energy = tfs->make<TEfficiency>("e_energy",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV",30,0,3);
+  h_cosmic = tfs->make<TH1F>("h_cosmic",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV",30,0,3);
+  h_nc = tfs->make<TH1F>("h_nc",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV",30,0,3);
+  h_nu_e = tfs->make<TH1F>("h_nu_e",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV",30,0,3);
+  h_nu_mu = tfs->make<TH1F>("h_nu_mu",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV",30,0,3);
+  h_dirt = tfs->make<TH1F>("h_dirt",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV",30,0,3);
+
+  h_e_stacked = tfs->make<TH1F>("h_e_stacked",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV");
 
 
   //add branches
@@ -141,7 +155,16 @@ test::PandoraAnalyzer::~PandoraAnalyzer()
   //store output tree
   myTFile->cd();
   myTTree->Write("pandoratree");
+
+  h_e_stacked->Add(h_cosmic);
+  h_e_stacked->Add(h_nc);
+  h_e_stacked->Add(h_nu_e);
+  h_e_stacked->Add(h_nu_mu);
+  h_e_stacked->Add(h_dirt);
+
+
   myTFile->Close();
+
 
   std::cout << "End!" << std::endl;
 }
