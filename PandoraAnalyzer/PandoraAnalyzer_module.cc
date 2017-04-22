@@ -179,6 +179,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
     }
 
     double true_neutrino_vertex[3] = {generator[0].GetNeutrino().Nu().Vx(),generator[0].GetNeutrino().Nu().Vy(),generator[0].GetNeutrino().Nu().Vz()};
+    std::cout << true_neutrino_vertex[0] << " " << true_neutrino_vertex[1] << " " << true_neutrino_vertex[2] << std::endl;
     if (!is_fiducial(true_neutrino_vertex)) {
       bkg_category = 5;
     }
