@@ -246,7 +246,9 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
         int showers = 0;
         int tracks = 0;
-
+        longest_track_dir = 0;
+        double longest_track = 0;
+        
         for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
 
           if (pfparticles[pfdaughter].PdgCode() == 11) {
@@ -268,8 +270,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
           }
 
-          longest_track_dir = 0;
-          double longest_track = 0;
+
 
           if (pfparticles[pfdaughter].PdgCode() == 13) {
             art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
