@@ -53,20 +53,6 @@ namespace test {
   class PandoraAnalyzer;
 }
 
-double x_start = 0;
-double x_end = 256.35;
-double y_start = -116.5;
-double y_end = 116.5;
-double z_start = 0;
-double z_end = 1036.8;
-double fidvol = 10;
-
-bool is_fiducial(double x[3], double d) {
-  bool is_x = x[0] > (x_start+d) && x[0] < (x_end-d);
-  bool is_y = x[1] > (y_start+d) && x[1] < (y_end-d);
-  bool is_z = x[2] > (z_start+d) && x[2] < (z_end-d);
-  return is_x && is_y && is_z;
-}
 
 double distance(double a[3], double b[3]) {
   double d = 0;
@@ -147,112 +133,85 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
   art::InputTag pandoraNu_tag { "pandoraNu" };
   art::InputTag generator_tag { "generator" };
 
+  int bkg_category = 0;
+  // 1 cosmic
+  // 2 nu_e
+  // 3 nu_mu
+  // 4 NC
+  // 5 Dirt
 
   auto const& generator_handle = evt.getValidHandle< std::vector< simb::MCTruth > >( generator_tag );
   auto const& generator(*generator_handle);
+  int ccnc = -1;
 
   std::vector<simb::MCParticle> nu_mcparticles;
-  for (int i = 0; i < generator[0].NParticles(); i++) {
-    if (generator[0].Origin() == 1) {
-      nu_mcparticles.push_back(generator[0].GetParticle(i));
+  if (generator.size() > 0) {
+    double nu_energy = generator[0].GetNeutrino().Nu().E();
+    ccnc = generator[0].GetNeutrino().CCNC();
+    std::cout << ccnc << std::endl;
+    for (int i = 0; i < generator[0].NParticles(); i++) {
+      if (generator[0].Origin() == 1) {
+        nu_mcparticles.push_back(generator[0].GetParticle(i));
+
+      }
     }
+  } else {
+    bkg_category = 1;
   }
 
-  double proton_energy = 0;
-  double electron_energy = 0;
-  int protons = 0;
-  bool is_pion = false;
-  bool is_electron = false;
-  double proton_energy_threshold = 0.06;
-  double electron_energy_threshold = 0.035;
+  if (bkg_category != 1) {
+    int protons = 0;
+    int electrons = 0;
+    int muons = 0;
 
-  for (auto& mcparticle: nu_mcparticles) {
-    if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and mcparticle.StatusCode() == 1) {
+    for (auto& mcparticle: nu_mcparticles) {
+      if (mcparticle.Process() == "primary" and mcparticle.T() != 0 and mcparticle.StatusCode() == 1) {
 
-      double position[3] = {mcparticle.Position().X(),mcparticle.Position().Y(),mcparticle.Position().Z()};
-      double end_position[3] = {mcparticle.EndPosition().X(),mcparticle.EndPosition().Y(),mcparticle.EndPosition().Z()};
+        switch(mcparticle.PdgCode())
+        {
+          case (2212):
+          protons++;
+          break;
 
-      if (mcparticle.PdgCode() == 2212 && (mcparticle.E()-mcparticle.Mass()) > proton_energy_threshold && is_fiducial(position,fidvol) && is_fiducial(end_position,fidvol)) {
-        protons++;
-        proton_energy = std::max(mcparticle.E()-mcparticle.Mass(), proton_energy);
+          case (11):
+          electrons++;
+          break;
+
+          // case (211):
+          // case (111):
+          // pions++;
+          // break;
+
+          case (13):
+          muons++;
+
+          default:
+          std::cout << mcparticle.PdgCode() << std::endl;
+          break;
+        }
+
       }
-
-      if (mcparticle.PdgCode() == 11 && (mcparticle.E()-mcparticle.Mass()) > electron_energy_threshold && is_fiducial(position,fidvol)) {
-        is_electron = true;
-        electron_energy = std::max(mcparticle.E()-mcparticle.Mass(), electron_energy);
-      }
-
-      if (mcparticle.PdgCode() == 211 || mcparticle.PdgCode() == 111) {
-        is_pion = true;
-      }
-
     }
-  }
 
-  double nu_energy = generator[0].GetNeutrino().Nu().E();
 
-  if (is_electron && !is_pion && protons == 1 && nu_energy > 0.2) {
-    std::cout << "CCQE 1e1p event" << std::endl;
 
     int showers = 0;
     int tracks = 0;
+    //
+    // try {
+    //   std::cout <<
+    // } catch (...) {
+    //   std::cout << "NO RECO DATA PRODUCTS" << std::endl;
+    // }
 
-    try {
-      auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
-      auto const& pfparticles(*pfparticle_handle);
-
-      art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-
-
-      for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
-
-        bool is_neutrino = (abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary();
-
-        // Is a nu_e or nu_mu PFParticle?
-        if (!is_neutrino) continue;
-
-        double closest_distance = std::numeric_limits<double>::max();
-
-        double neutrino_vertex[3];
-
-        auto const& neutrino_vertex_obj = vertex_per_pfpart.at(ipf);
-        neutrino_vertex_obj->XYZ(neutrino_vertex); // PFParticle neutrino vertex coordinates
-
-        // Is the vertex within fiducial volume?
-        if (!is_fiducial(neutrino_vertex, fidvol)) continue;
-
-        closest_distance = std::min(distance(neutrino_vertex,neutrino_vertex),closest_distance);
-        //cout << pfparticles[ipf].PdgCode() << " " << distance(neutrino_vertex,correct_neutrino_vertex) << endl;
-
-        // Loop over the neutrino daughters and check if there is a shower and a track
-        for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
-
-          // auto const& daughter_vertex_obj = vertex_per_pfpart.at(pfdaughter);
-          // double daughter_vertex[3];
-          // daughter_vertex_obj->XYZ(daughter_vertex);
-          // double distance_daugther = distance(neutrino_vertex,daughter_vertex);
-
-          if (pfparticles[pfdaughter].PdgCode() == 11) {
-            showers++;
-          }
-
-          if (pfparticles[pfdaughter].PdgCode() == 13) {
-            tracks++;
-          }
-
-        } // end for pfparticle daughters
-
-
-      } // end for pfparticles
-
-
-    } catch (...) {
-      std::cout << "NO RECO DATA PRODUCTS" << std::endl;
+    if (protons != 0 && electrons != 0) {
+      bkg_category = 2;
+    } else if (protons != 0 && muons != 0) {
+      bkg_category = 3;
     }
+  } // end bkg_category != 1 if
 
-    e_energy->Fill(showers == 1 && tracks == 1, nu_energy);
 
-  } // end CCQE if
 
 
 } // end analyze function
