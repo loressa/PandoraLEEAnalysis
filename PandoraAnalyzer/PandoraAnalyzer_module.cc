@@ -260,7 +260,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
     }
   }
 
-  try {
+  // try {
     auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
     auto const& pfparticles(*pfparticle_handle);
 
@@ -344,9 +344,9 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
     std::cout << "Z IPF " << most_z << " " << most_z_ipf << std::endl;
 
-  } catch (...) {
-    std::cout << "NO RECO DATA PRODUCTS" << std::endl;
-  }
+  // } catch (...) {
+  //   std::cout << "NO RECO DATA PRODUCTS" << std::endl;
+  // }
 
   if (bkg_category != k_cosmic && bkg_category != k_dirt && bkg_category != k_nc) {
     if (protons != 0 && electrons != 0) {
