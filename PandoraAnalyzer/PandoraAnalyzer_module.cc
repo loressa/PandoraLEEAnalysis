@@ -109,7 +109,7 @@ private:
   bool is_fiducial(double x[3]) const;
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
-  void measure_energy(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, art::Event & evt, double & energy);
+  void measure_energy(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, const art::Event & evt, double & energy);
 
 };
 
@@ -156,7 +156,7 @@ double test::PandoraAnalyzer::distance(double a[3], double b[3]) {
   return sqrt(d);
 }
 
-void test::PandoraAnalyzer::measure_energy(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, art::Event & evt, double & energy) {
+void test::PandoraAnalyzer::measure_energy(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, const art::Event & evt, double & energy) {
 
   art::InputTag pandoraNu_tag { "pandoraNu" };
 
