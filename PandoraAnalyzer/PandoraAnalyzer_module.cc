@@ -87,7 +87,21 @@ private:
   TFile * myTFile;
   TTree * myTTree;
   TEfficiency * e_energy;
-  bool         m_printDebug;
+  bool m_printDebug;
+  double m_fidvolXstart;
+  double m_fidvolXend;
+
+  double m_fidvolYstart;
+  double m_fidvolYend;
+
+  double m_fidvolZstart;
+  double m_fidvolZend;
+
+  double m_trackLength;
+
+  bool is_fiducial(double x[3]) const;
+
+
 
 };
 
@@ -125,6 +139,19 @@ test::PandoraAnalyzer::~PandoraAnalyzer()
 }
 
 
+bool test::PandoraAnalyzer::is_fiducial(double x[3]) const
+{
+  art::ServiceHandle<geo::Geometry> geo;
+  double bnd[6] = {0.,2.*geo->DetHalfWidth(),-geo->DetHalfHeight(),geo->DetHalfHeight(),0.,geo->DetLength()};
+
+  bool is_x = x[0] > (bnd[0]+m_fidvolXstart) && x[0] < (bnd[1]-m_fidvolXend);
+  bool is_y = x[1] > (bnd[2]+m_fidvolYstart) && x[1] < (bnd[3]-m_fidvolYend);
+  bool is_z = x[2] > (bnd[4]+m_fidvolZstart) && x[2] < (bnd[5]-m_fidvolZend);
+  return is_x && is_y && is_z;
+}
+
+
+
 
 void test::PandoraAnalyzer::analyze(art::Event const & evt)
 {
@@ -146,9 +173,12 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
   std::vector<simb::MCParticle> nu_mcparticles;
   if (generator.size() > 0) {
-    //double nu_energy = generator[0].GetNeutrino().Nu().E();
     ccnc = generator[0].GetNeutrino().CCNC();
-    std::cout << ccnc << std::endl;
+    double true_neutrino_vertex[3] = {generator[0].GetNeutrino().Nu().Vx(),generator[0].GetNeutrino().Nu().Vy(),generator[0].GetNeutrino().Nu().Vz()};
+    if (!is_fiducial(true_neutrino_vertex)) {
+      bkg_category = 5;
+    }
+
     for (int i = 0; i < generator[0].NParticles(); i++) {
       if (generator[0].Origin() == 1) {
         nu_mcparticles.push_back(generator[0].GetParticle(i));
@@ -159,7 +189,8 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
     bkg_category = 1;
   }
 
-  if (bkg_category != 1) {
+
+  if (bkg_category != 1 && bkg_category != 5) {
     int protons = 0;
     int electrons = 0;
     int muons = 0;
@@ -177,39 +208,93 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
           electrons++;
           break;
 
-          // case (211):
-          // case (111):
-          // pions++;
-          // break;
-
           case (13):
           muons++;
-
-          default:
-          std::cout << mcparticle.PdgCode() << std::endl;
           break;
         }
 
       }
     }
 
-    // int showers = 0;
-    // int tracks = 0;
-    //
-    // try {
-    //   std::cout <<
-    // } catch (...) {
-    //   std::cout << "NO RECO DATA PRODUCTS" << std::endl;
-    // }
 
-    if (protons != 0 && electrons != 0) {
+    try {
+      auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
+      auto const& pfparticles(*pfparticle_handle);
+
+      int most_z_ipf = 0;
+      double most_z = -1;
+      double longest_track_dir = 0;
+
+      for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
+
+        bool is_neutrino = (abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary();
+        if (!is_neutrino) continue;
+
+
+        int showers = 0;
+        int tracks = 0;
+
+        for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
+
+          if (pfparticles[pfdaughter].PdgCode() == 11) {
+            art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+            auto const& shower_obj = shower_per_pfpart.at(pfdaughter);
+            bool contained_shower = false;
+            double start_point[3];
+            double end_point[3];
+
+            double shower_length = shower_obj->Length();
+            for (int ix = 0; ix < 3; ix++) {
+              start_point[ix] = shower_obj->ShowerStart()[ix];
+              end_point[ix] = shower_obj->ShowerStart()[ix]+shower_length*shower_obj->Direction()[ix];
+            }
+
+            contained_shower = is_fiducial(start_point) && is_fiducial(end_point);
+
+            if (contained_shower) showers++;
+
+          }
+
+          longest_track_dir = 0;
+          double longest_track = 0;
+
+          if (pfparticles[pfdaughter].PdgCode() == 13) {
+            art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+            auto const& track_obj = track_per_pfpart.at(pfdaughter);
+
+            if (track_obj->Length() < m_trackLength) {
+              tracks++;
+              if (track_obj->Length() > longest_track) {
+                longest_track = track_obj->Length();
+                longest_track_dir = track_obj->StartDirection()[2];
+              }
+            }
+          }
+
+        } // end for pfparticle daughters
+
+        if (tracks >= 1 && showers >= 1 && longest_track_dir > most_z) {
+          most_z_ipf = ipf;
+          most_z = longest_track_dir;
+        }
+
+      } // end for pfparticles
+      std::cout << most_z << " " << most_z_ipf << std::endl;
+
+    } catch (...) {
+      std::cout << "NO RECO DATA PRODUCTS" << std::endl;
+    }
+
+    if (ccnc == 1) {
+      bkg_category = 4;
+    else if (protons != 0 && electrons != 0) {
       bkg_category = 2;
     } else if (protons != 0 && muons != 0) {
       bkg_category = 3;
     }
   } // end bkg_category != 1 if
 
-
+  std::cout << bkg_category << std::endl;
 
 
 } // end analyze function
@@ -225,7 +310,16 @@ void test::PandoraAnalyzer::reconfigure(fhicl::ParameterSet const & pset)
   //  m_particleLabel = pset.get<std::string>("PFParticleModule","pandoraNu");
 
   m_printDebug = pset.get<bool>("PrintDebug",false);
+  m_trackLength = pset.get<int>("trackLength",100);
 
+  m_fidvolXstart = pset.get<double>("fidvolXstart",10);
+  m_fidvolXend = pset.get<double>("fidvolXstart",10);
+
+  m_fidvolYstart = pset.get<double>("fidvolYstart",20);
+  m_fidvolYend = pset.get<double>("fidvolYend",20);
+
+  m_fidvolZstart = pset.get<double>("fidvolZstart",10);
+  m_fidvolZend = pset.get<double>("fidvolZend",50);
 }
 
 //---------------------------------------------------------------------------------------------------------------------------
