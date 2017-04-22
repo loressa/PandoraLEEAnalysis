@@ -36,6 +36,7 @@
 #include "nusimdata/SimulationBase/MCParticle.h"
 #include "canvas/Persistency/Common/FindOneP.h"
 #include "canvas/Utilities/InputTag.h"
+#include "larcore/Geometry/Geometry.h"
 
 #include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
 
@@ -47,7 +48,6 @@
 
 using namespace lar_pandora;
 
-namespace geo { class Geometry; }
 
 namespace test {
   class PandoraAnalyzer;
