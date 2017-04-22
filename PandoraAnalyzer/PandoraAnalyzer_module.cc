@@ -108,7 +108,7 @@ private:
   bool is_fiducial(double x[3]) const;
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
-  void measure_energy(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, art::Event & evt, double & energy)
+  void measure_energy(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, art::Event & evt, double & energy);
 
 };
 
@@ -167,7 +167,7 @@ void test::PandoraAnalyzer::measure_energy(size_t ipf, const std::vector<recob::
   }
 
   for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
-    measure_energy(size_t pfdaughter, const std::vector<recob::PFParticle> & pfparticles, art::Event & evt, double &energy)
+    measure_energy(pfdaughter, pfparticles, evt, energy);
   }
 }
 
@@ -318,7 +318,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
     double reco_energy = -1;
     if (most_z_ipf != -1)  {
-      measure_energy(most_z_ipf, pfparticles, evt, reco_energy)
+      measure_energy(most_z_ipf, pfparticles, evt, reco_energy);
     }
 
     if (generator.size() > 0 && most_z_ipf != -1) {
