@@ -108,7 +108,7 @@ private:
   bool is_fiducial(double x[3]) const;
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
-  void measure_energy(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, art::Event & evt);
+  void measure_energy(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, art::Event & evt, double & energy)
 
 };
 
