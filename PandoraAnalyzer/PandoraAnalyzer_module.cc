@@ -274,7 +274,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
           if (pfparticles[pfdaughter].PdgCode() == 13) {
             art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
             auto const& track_obj = track_per_pfpart.at(pfdaughter);
-
+            std::cout << "Track length " <<   track_obj->Length() << std::endl;
             if (track_obj->Length() < m_trackLength) {
               tracks++;
               if (track_obj->Length() > longest_track) {
@@ -285,14 +285,14 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
           }
 
         } // end for pfparticle daughters
-        std::cout << tracks << " " << showers << std::endl;
+        std::cout << "TS " << tracks << " " << showers << std::endl;
         if (tracks >= 1 && showers >= 1 && longest_track_dir > most_z) {
           most_z_ipf = ipf;
           most_z = longest_track_dir;
         }
 
       } // end for pfparticles
-      std::cout << most_z << " " << most_z_ipf << std::endl;
+      std::cout << "Z IPF" << most_z << " " << most_z_ipf << std::endl;
 
     } catch (...) {
       std::cout << "NO RECO DATA PRODUCTS" << std::endl;
