@@ -267,6 +267,8 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
     int most_z_ipf = -1;
     double most_z = -1;
 
+    std::vector<size_t> nu_candidates;
+
     for (size_t ipf = 0; ipf < pfparticles.size(); ipf++) {
 
       bool is_neutrino = (abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary();
@@ -311,6 +313,10 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
         }
 
       } // end for pfparticle daughters
+
+      if (tracks >= 1 && showers >= 1) {
+        nu_candidates.push_back(ipf);
+      }
 
       if (tracks >= 1 && showers >= 1 && longest_track_dir > most_z) {
         most_z_ipf = ipf;
