@@ -174,6 +174,10 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
   std::vector<simb::MCParticle> nu_mcparticles;
   if (generator.size() > 0) {
     ccnc = generator[0].GetNeutrino().CCNC();
+    if (ccnc == 1) {
+      bkg_category = 4;
+    }
+
     double true_neutrino_vertex[3] = {generator[0].GetNeutrino().Nu().Vx(),generator[0].GetNeutrino().Nu().Vy(),generator[0].GetNeutrino().Nu().Vz()};
     if (!is_fiducial(true_neutrino_vertex)) {
       bkg_category = 5;
@@ -182,7 +186,6 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
     for (int i = 0; i < generator[0].NParticles(); i++) {
       if (generator[0].Origin() == 1) {
         nu_mcparticles.push_back(generator[0].GetParticle(i));
-
       }
     }
   } else {
@@ -190,7 +193,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
   }
 
 
-  if (bkg_category != 1 && bkg_category != 5) {
+  if (bkg_category != 1 && bkg_category != 5 && bkg_category != 4) {
     int protons = 0;
     int electrons = 0;
     int muons = 0;
@@ -266,7 +269,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
               tracks++;
               if (track_obj->Length() > longest_track) {
                 longest_track = track_obj->Length();
-                longest_track_dir = track_obj->StartDirection()[2];
+                longest_track_dir = track_obj->StartDirection()->Z();
               }
             }
           }
@@ -285,9 +288,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
       std::cout << "NO RECO DATA PRODUCTS" << std::endl;
     }
 
-    if (ccnc == 1) {
-      bkg_category = 4;
-    else if (protons != 0 && electrons != 0) {
+    if (protons != 0 && electrons != 0) {
       bkg_category = 2;
     } else if (protons != 0 && muons != 0) {
       bkg_category = 3;
