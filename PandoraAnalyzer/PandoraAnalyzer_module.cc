@@ -280,6 +280,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
               if (track_obj->Length() > longest_track) {
                 longest_track = track_obj->Length();
                 longest_track_dir = track_obj->StartDirection().Z();
+                std::cout << "Dir " << longest_track_dir << std::endl;
               }
             }
           }
@@ -292,7 +293,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
         }
 
       } // end for pfparticles
-      std::cout << "Z IPF" << most_z << " " << most_z_ipf << std::endl;
+      std::cout << "Z IPF " << most_z << " " << most_z_ipf << std::endl;
 
     } catch (...) {
       std::cout << "NO RECO DATA PRODUCTS" << std::endl;
