@@ -160,6 +160,31 @@ test::PandoraAnalyzer::~PandoraAnalyzer()
   myTFile->cd();
   myTTree->Write("pandoratree");
 
+  h_cosmic->SetLineColor(1);
+  h_cosmic->SetLineWidth(2);
+  h_cosmic->SetFillColor(kRed-3);
+  h_cosmic->Write();
+
+  h_nc->SetLineColor(1);
+  h_nc->SetLineWidth(2);
+  h_nc->SetFillColor(kBlue-9);
+  h_nc->Write();
+
+  h_nu_e->SetLineColor(1);
+  h_nu_e->SetLineWidth(2);
+  h_nu_e->SetFillColor(kGreen-2);
+  h_nu_e->Write();
+
+  h_nu_mu->SetLineColor(1);
+  h_nu_mu->SetLineWidth(2);
+  h_nu_mu->SetFillColor(kBlue-5);
+  h_nu_mu->Write();
+
+  h_dirt->SetLineColor(1);
+  h_dirt->SetLineWidth(2);
+  h_dirt->SetFillColor(kGray);
+  h_dirt->Write();
+
   h_e_stacked->Add(h_cosmic);
   h_e_stacked->Add(h_nc);
   h_e_stacked->Add(h_nu_e);
