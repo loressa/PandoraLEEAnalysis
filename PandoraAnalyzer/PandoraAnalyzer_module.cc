@@ -111,11 +111,11 @@ private:
 
   double m_trackLength;
 
-  int k_cosmic = 1;
-  int k_nu_e = 2;
-  int k_nu_mu = 3;
-  int k_nc = 4;
-  int k_dirt = 5;
+  const int k_cosmic = 1;
+  const int k_nu_e = 2;
+  const int k_nu_mu = 3;
+  const int k_nc = 4;
+  const int k_dirt = 5;
 
   bool is_fiducial(double x[3]) const;
   double distance(double a[3], double b[3]);
