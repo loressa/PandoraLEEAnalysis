@@ -165,7 +165,7 @@ test::PandoraAnalyzer::~PandoraAnalyzer()
   h_e_stacked->Add(h_nu_e);
   h_e_stacked->Add(h_nu_mu);
   h_e_stacked->Add(h_dirt);
-
+  h_e_stacked->Write();
 
   myTFile->Close();
 
@@ -286,6 +286,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
     }
   }
+  double reco_energy = 0;
 
   try {
     auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
@@ -354,7 +355,6 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
     if (nu_candidates.size() == 0) return;
 
-    double reco_energy = 0;
     measure_energy(most_z_ipf, pfparticles, evt, reco_energy);
     std::cout << "Energy " << reco_energy << std::endl;
 
@@ -384,6 +384,22 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
     }
   }
 
+  switch (bkg_category) {
+    case k_cosmic:
+    h_cosmic->Fill(reco_energy);
+
+    case k_nu_mu:
+    h_nu_mu->Fill(reco_energy);
+
+    case k_nu_e:
+    h_nu_e->Fill(reco_energy);
+
+    case k_dirt:
+    h_dirt->Fill(reco_energy);
+
+    case k_nc:
+    h_nc->Fill(reco_energy);
+  }
   std::cout << "Category " << bkg_category << std::endl;
 
 
