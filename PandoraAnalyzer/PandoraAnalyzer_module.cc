@@ -385,19 +385,19 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
   }
 
   switch (bkg_category) {
-    case k_cosmic:
+    case (k_cosmic):
     h_cosmic->Fill(reco_energy);
 
-    case k_nu_mu:
+    case (k_nu_mu):
     h_nu_mu->Fill(reco_energy);
 
-    case k_nu_e:
+    case (k_nu_e):
     h_nu_e->Fill(reco_energy);
 
-    case k_dirt:
+    case (k_dirt):
     h_dirt->Fill(reco_energy);
 
-    case k_nc:
+    case (k_nc):
     h_nc->Fill(reco_energy);
   }
   std::cout << "Category " << bkg_category << std::endl;
