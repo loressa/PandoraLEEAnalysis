@@ -384,22 +384,19 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
     }
   }
 
-  switch (bkg_category) {
-    case (k_cosmic):
+  if (bkg_category == k_cosmic) {
     h_cosmic->Fill(reco_energy);
-
-    case (k_nu_mu):
+  } else if (bkg_category == k_nu_mu) {
     h_nu_mu->Fill(reco_energy);
-
-    case (k_nu_e):
-    h_nu_e->Fill(reco_energy);
-
-    case (k_dirt):
+  } else if (bkg_category == k_nu_e) {
+    h_nu_e->Fill(reco_energy)
+  } else if (bkg_category == k_dirt) {
     h_dirt->Fill(reco_energy);
-
-    case (k_nc):
+  } else if (bkg_category == k_nc) {
     h_nc->Fill(reco_energy);
   }
+
+  
   std::cout << "Category " << bkg_category << std::endl;
 
 
