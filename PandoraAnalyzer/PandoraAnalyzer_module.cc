@@ -389,14 +389,14 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
   } else if (bkg_category == k_nu_mu) {
     h_nu_mu->Fill(reco_energy);
   } else if (bkg_category == k_nu_e) {
-    h_nu_e->Fill(reco_energy)
+    h_nu_e->Fill(reco_energy);
   } else if (bkg_category == k_dirt) {
     h_dirt->Fill(reco_energy);
   } else if (bkg_category == k_nc) {
     h_nc->Fill(reco_energy);
   }
 
-  
+
   std::cout << "Category " << bkg_category << std::endl;
 
 
