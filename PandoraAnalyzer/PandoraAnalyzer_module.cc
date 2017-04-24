@@ -126,7 +126,7 @@ private:
   void get_daughter_showers(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Shower> > &showers);
 
   double get_longest_track_dir(std::vector< art::Ptr<recob::Track> > &tracks);
-  art::Ptr<recob::Track> test::PandoraAnalyzer::get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks);
+  art::Ptr<recob::Track> get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks);
 
 };
 
