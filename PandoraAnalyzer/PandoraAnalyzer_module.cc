@@ -222,7 +222,7 @@ void test::PandoraAnalyzer::get_daughter_tracks(size_t ipf, const art::Event & e
     if (pfparticles[pfdaughter].PdgCode() == 13) {
       auto const& track_obj = track_per_pfpart.at(pfdaughter);
       if (track_obj->Length() < m_trackLength) {
-        tracks.push_back(track_obj->ID());
+        tracks.push_back(track_obj);
       }
     }
   }
