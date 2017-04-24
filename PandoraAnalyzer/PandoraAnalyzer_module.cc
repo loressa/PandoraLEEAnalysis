@@ -120,8 +120,9 @@ private:
   bool is_fiducial(double x[3]) const;
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
-  void measure_energy(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, const art::Event & evt, double & energy);
+  void measure_energy(size_t ipf, const art::Event & evt, double & energy);
   size_t choose_candidate(std::vector<size_t> & candidates, const art::Event & evt);
+  void get_daughter_tracks(size_t ipf, const art::Event & evt, std::vector<recob::Track> &tracks);
 
 };
 
@@ -209,11 +210,30 @@ double test::PandoraAnalyzer::distance(double a[3], double b[3]) {
   return sqrt(d);
 }
 
-void test::PandoraAnalyzer::measure_energy(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, const art::Event & evt, double & energy) {
+void get_daughter_tracks(size_t ipf, const art::Event & evt, std::vector<recob::Track> &tracks) {
+  art::InputTag pandoraNu_tag { "pandoraNu" };
+
+  auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
+  auto const& pfparticles(*pfparticle_handle);
+
+  art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+
+  for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
+    if (pfparticles[pfdaughter].PdgCode() == 13) {
+      auto const& track_obj = track_per_pfpart.at(pfdaughter);
+      if (track_obj->Length() < m_trackLength) {
+        tracks->push_back(track_obj->ID());
+      }
+    }
+  }
+}
+
+void test::PandoraAnalyzer::measure_energy(size_t ipf, const art::Event & evt, double & energy) {
 
   art::InputTag pandoraNu_tag { "pandoraNu" };
 
   auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
+  auto const& pfparticles(*pfparticle_handle);
 
   art::FindManyP<recob::Shower > showers_per_pfparticle ( pfparticle_handle, evt, pandoraNu_tag );
   std::vector<art::Ptr<recob::Shower>> showers = showers_per_pfparticle.at(ipf);
@@ -372,6 +392,9 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
       int showers = 0;
       int tracks = 0;
 
+      std::vector<recob::Track> nu_tracks;
+      get_daughter_tracks(ipf, evt, nu_tracks);
+
       for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
 
         if (pfparticles[pfdaughter].PdgCode() == 11) {
@@ -400,7 +423,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
       } // end for pfparticle daughters
 
-      if (tracks >= 1 && showers >= 1) {
+      if (nu_tracks.size() > 0 && showers >= 1) {
         nu_candidates.push_back(ipf);
       }
 
@@ -410,8 +433,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
     size_t ipf_candidate = choose_candidate(nu_candidates, evt);
 
-    measure_energy(ipf_candidate, pfparticles, evt, reco_energy);
-    std::cout << "Energy " << reco_energy << std::endl;
+    measure_energy(ipf_candidate, evt, reco_energy);
 
     if (generator.size() > 0) {
       art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
@@ -419,7 +441,6 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
       double reco_neutrino_vertex[3];
       vertex_obj->XYZ(reco_neutrino_vertex);
-      std::cout << distance(reco_neutrino_vertex,true_neutrino_vertex) << std::endl;
       if (distance(reco_neutrino_vertex,true_neutrino_vertex) > 10) {
         bkg_category = k_cosmic;
       }
