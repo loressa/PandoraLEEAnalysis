@@ -256,6 +256,7 @@ void test::PandoraAnalyzer::get_daughter_showers(size_t ipf, const art::Event & 
       bool contained_shower = false;
       double start_point[3];
       double end_point[3];
+      auto const& shower_obj = shower_per_pfpart.at(pfdaughter);
 
       double shower_length = shower_obj->Length();
       for (int ix = 0; ix < 3; ix++) {
