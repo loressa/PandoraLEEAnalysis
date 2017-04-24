@@ -393,6 +393,9 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
       std::vector<art::Ptr<recob::Track>> nu_tracks;
       get_daughter_tracks(ipf, evt, nu_tracks);
+      for (auto const& track: nu_tracks) {
+        std::cout << track->Length() << std::endl;
+      }
 
       for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
 
