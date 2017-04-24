@@ -324,7 +324,7 @@ double test::PandoraAnalyzer::trackEnergy(const art::Ptr<recob::Track>& track, c
         //std::cout << "Length: " << track->Length() << "and Energy approximation is " << mean/calos[ical]->dEdx().size()*track->Length()<< "MeV"<<std::endl;
         Eapprox = mean/calos[ical]->dEdx().size()*track->Length();
     }
-    return Eapprox;
+    return Eapprox/1000; // convert to GeV
 }
 
 
