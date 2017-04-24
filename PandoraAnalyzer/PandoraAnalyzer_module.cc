@@ -296,7 +296,6 @@ size_t test::PandoraAnalyzer::choose_candidate(std::vector<size_t> & candidates,
   art::InputTag pandoraNu_tag { "pandoraNu" };
 
   auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
-  auto const& pfparticles(*pfparticle_handle);
 
   art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
   art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
