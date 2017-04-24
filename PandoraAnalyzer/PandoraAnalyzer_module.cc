@@ -96,6 +96,7 @@ private:
   TH1F * h_dirt;
   TH1F * h_cosmic;
   TH1F * h_nc;
+  TH1F * h_track_dir;
   THStack * h_e_stacked;
 
 
@@ -124,9 +125,8 @@ private:
   size_t choose_candidate(std::vector<size_t> & candidates, const art::Event & evt);
   void get_daughter_tracks(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Track> > &tracks);
   void get_daughter_showers(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Shower> > &showers);
-
-  double get_longest_track_dir(std::vector< art::Ptr<recob::Track> > &tracks);
   art::Ptr<recob::Track> get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks);
+  double trackEnergy(const art::Ptr<recob::Track>& track, const art::Event & evt);
 
 };
 
@@ -151,6 +151,7 @@ test::PandoraAnalyzer::PandoraAnalyzer(fhicl::ParameterSet const & pset)
 
   h_e_stacked = tfs->make<THStack>("h_e_stacked",";#nu_{e} energy [GeV];N. Entries / 0.1 GeV");
 
+  h_track_dir = tfs->make<TH1F>("h_track_dir",";Track direction [cos#theta];N. Entries / 0.1",20,-1,1);
 
   //add branches
 
@@ -198,6 +199,7 @@ test::PandoraAnalyzer::~PandoraAnalyzer()
   h_e_stacked->Add(h_dirt);
   h_e_stacked->Write();
 
+  h_track_dir->Write();
   myTFile->Close();
 
 
@@ -224,18 +226,6 @@ art::Ptr<recob::Track> test::PandoraAnalyzer::get_longest_track(std::vector< art
     }
   }
   return longest_track;
-}
-
-double test::PandoraAnalyzer::get_longest_track_dir(std::vector< art::Ptr<recob::Track> > &tracks) {
-  double max_length = 0;
-  double dir = -1;
-  for (auto const& track: tracks) {
-    if (track->Length() > max_length) {
-      dir = track->StartDirection().Z();
-      max_length = track->Length();
-    }
-  }
-  return dir;
 }
 
 void test::PandoraAnalyzer::get_daughter_tracks(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Track> > &tracks) {
@@ -285,6 +275,59 @@ void test::PandoraAnalyzer::get_daughter_showers(size_t ipf, const art::Event & 
   }
 }
 
+double test::PandoraAnalyzer::trackEnergy(const art::Ptr<recob::Track>& track, const art::Event & evt)
+{
+    art::InputTag pandoraNu_tag { "pandoraNu" };
+    auto const& track_handle = evt.getValidHandle< std::vector< recob::Track > >( pandoraNu_tag );
+    art::FindManyP<anab::Calorimetry> calo_track_ass(track_handle, evt, "pandoraNucalo");
+    const std::vector<art::Ptr<anab::Calorimetry>> calos = calo_track_ass.at(track->ID());
+    double E = 0;
+    double Eapprox =0;
+
+    for (size_t ical = 0; ical<calos.size(); ++ical)
+    {
+        if (E!=0) continue;
+        if (!calos[ical]) continue;
+        if (!calos[ical]->PlaneID().isValid) continue;
+        int planenum = calos[ical]->PlaneID().Plane;
+        if (planenum<0||planenum>2) continue;
+        if (planenum != 2) continue;                           // Use informartion from collection plane only
+
+        // Understand if the calo module flipped the track
+        //double dqdx_start = (calos[ical]->dQdx())[0] + (calos[ical]->dQdx())[1] + (calos[ical]->dQdx())[2];
+        //double dqdx_end   = (calos[ical]->dQdx())[calos[ical]->dQdx().size()-1] + (calos[ical]->dQdx())[calos[ical]->dQdx().size()-2] + (calos[ical]->dQdx())[calos[ical]->dQdx().size()-3];
+        //bool caloFlippedTrack = dqdx_start < dqdx_end;
+
+        double mean=0;
+        double dedx=0;
+        double prevresrange=0;
+
+        if(calos[ical]->ResidualRange()[0] > track->Length()/2)
+        {
+            prevresrange=track->Length();
+        }
+
+        double currentresrange=0;
+
+        for(size_t iTrkHit = 0; iTrkHit < calos[ical]->dEdx().size(); ++iTrkHit)
+        {
+            dedx = calos[ical]->dEdx()[iTrkHit];
+            currentresrange = calos[ical]->ResidualRange()[iTrkHit];
+            if(dedx>0 && dedx<10)
+            {
+                std::cout << dedx << "\t" << currentresrange << "\t"<< prevresrange<<std::endl;
+                mean+=dedx;
+                E+=dedx*abs(prevresrange-currentresrange);
+                prevresrange=currentresrange;
+            }
+        }
+        //std::cout << "Length: " << track->Length() << "and Energy approximation is " << mean/calos[ical]->dEdx().size()*track->Length()<< "MeV"<<std::endl;
+        Eapprox = mean/calos[ical]->dEdx().size()*track->Length();
+    }
+    return Eapprox;
+}
+
+
 void test::PandoraAnalyzer::measure_energy(size_t ipf, const art::Event & evt, double & energy) {
 
   art::InputTag pandoraNu_tag { "pandoraNu" };
@@ -297,6 +340,13 @@ void test::PandoraAnalyzer::measure_energy(size_t ipf, const art::Event & evt, d
 
   for(size_t ish = 0; ish < showers.size(); ish++) {
     energy += showers[ish]->Energy()[showers[ish]->best_plane()];
+  }
+
+  art::FindManyP<recob::Track > track_per_pfparticle ( pfparticle_handle, evt, pandoraNu_tag );
+  std::vector<art::Ptr<recob::Track>> tracks = tracks_per_pfparticle.at(ipf);
+
+  for(size_t itr = 0; itr < tracks.size(); itr++) {
+    energy += trackEnergy(tracks[itr], evt);
   }
 
   for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
@@ -323,7 +373,7 @@ size_t test::PandoraAnalyzer::choose_candidate(std::vector<size_t> & candidates,
     std::vector<art::Ptr<recob::Track>> nu_tracks;
 
     get_daughter_tracks(ic, evt, nu_tracks);
-    longest_track_dir = get_longest_track_dir(nu_tracks);
+    longest_track_dir = get_longest_track(nu_tracks)->StartDirection().Z();
 
     if (longest_track_dir > most_z) {
       chosen_candidate = ic;
@@ -468,8 +518,10 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
     std::vector<art::Ptr<recob::Track>> chosen_tracks;
     get_daughter_tracks(ipf_candidate, evt, chosen_tracks);
+
     std::cout << "Longest track dir " << get_longest_track(chosen_tracks)->StartDirection().Z() << std::endl;
-    //h_track_dir->Fill(get_longest_track(chosen_tracks)->StartDirection().Z());
+    h_track_dir->Fill(get_longest_track(chosen_tracks)->StartDirection().Z());
+
     std::cout << "Chosen neutrino " << ipf_candidate << std::endl;
 
   } catch (...) {
