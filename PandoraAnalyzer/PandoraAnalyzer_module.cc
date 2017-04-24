@@ -123,6 +123,8 @@ private:
   void measure_energy(size_t ipf, const art::Event & evt, double & energy);
   size_t choose_candidate(std::vector<size_t> & candidates, const art::Event & evt);
   void get_daughter_tracks(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Track> > &tracks);
+  void get_daughter_showers(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Shower> > &showers);
+
   double get_longest_track_dir(std::vector< art::Ptr<recob::Track> > &tracks);
 
 };
