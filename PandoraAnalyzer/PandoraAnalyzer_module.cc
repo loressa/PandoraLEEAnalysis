@@ -123,6 +123,7 @@ private:
   void measure_energy(size_t ipf, const art::Event & evt, double & energy);
   size_t choose_candidate(std::vector<size_t> & candidates, const art::Event & evt);
   void get_daughter_tracks(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Track> > &tracks);
+  double get_longest_track_dir(std::vector< art::Ptr<recob::Track> > &tracks);
 
 };
 
@@ -210,6 +211,18 @@ double test::PandoraAnalyzer::distance(double a[3], double b[3]) {
   return sqrt(d);
 }
 
+double test::PandoraAnalyzer::get_longest_track_dir(std::vector< art::Ptr<recob::Track> > &tracks) {
+  double max_length = 0;
+  double dir = -1;
+  for (auto const& track: tracks) {
+    if (track->Length() > max_length) {
+      dir = track->StartDirection().Z();
+      max_length = track->Length();
+    }
+  }
+  return dir;
+}
+
 void test::PandoraAnalyzer::get_daughter_tracks(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Track> > &tracks) {
   art::InputTag pandoraNu_tag { "pandoraNu" };
 
@@ -224,6 +237,34 @@ void test::PandoraAnalyzer::get_daughter_tracks(size_t ipf, const art::Event & e
       if (track_obj->Length() < m_trackLength) {
         tracks.push_back(track_obj);
       }
+    }
+  }
+}
+
+void test::PandoraAnalyzer::get_daughter_showers(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Shower> > &showers) {
+  art::InputTag pandoraNu_tag { "pandoraNu" };
+
+  auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
+  auto const& pfparticles(*pfparticle_handle);
+
+  art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
+
+  for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
+    if (pfparticles[pfdaughter].PdgCode() == 11) {
+      bool contained_shower = false;
+      double start_point[3];
+      double end_point[3];
+
+      double shower_length = shower_obj->Length();
+      for (int ix = 0; ix < 3; ix++) {
+        start_point[ix] = shower_obj->ShowerStart()[ix];
+        end_point[ix] = shower_obj->ShowerStart()[ix]+shower_length*shower_obj->Direction()[ix];
+      }
+
+      contained_shower = is_fiducial(start_point) && is_fiducial(end_point);
+
+      if (contained_shower) showers.push_back(shower_obj);
+
     }
   }
 }
@@ -262,19 +303,12 @@ size_t test::PandoraAnalyzer::choose_candidate(std::vector<size_t> & candidates,
 
   for (auto const& ic: candidates) {
 
-    double longest_track = 0;
     double longest_track_dir = -1;
 
-    for (auto const& pfdaughter: pfparticles[ic].Daughters()) {
+    std::vector<art::Ptr<recob::Track>> nu_tracks;
 
-      if (pfparticles[pfdaughter].PdgCode() == 13) {
-        auto const& track_obj = track_per_pfpart.at(pfdaughter);
-        if (track_obj->Length() > longest_track) {
-          longest_track = track_obj->Length();
-          longest_track_dir = track_obj->StartDirection().Z();
-        }
-      }
-    }
+    get_daughter_tracks(ic, evt, nu_tracks);
+    longest_track_dir = get_longest_track_dir(nu_tracks);
 
     if (longest_track_dir > most_z) {
       chosen_candidate = ic;
@@ -388,44 +422,13 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
       bool is_neutrino = (abs(pfparticles[ipf].PdgCode()) == 12 || abs(pfparticles[ipf].PdgCode()) == 14) && pfparticles[ipf].IsPrimary();
       if (!is_neutrino) continue;
 
-      int showers = 0;
-      int tracks = 0;
-
       std::vector<art::Ptr<recob::Track>> nu_tracks;
+      std::vector<art::Ptr<recob::Shower>> nu_showers;
+
       get_daughter_tracks(ipf, evt, nu_tracks);
-      for (auto const& track: nu_tracks) {
-        std::cout << track->Length() << std::endl;
-      }
+      get_daughter_showers(ipf, evt, nu_showers);
 
-      for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
-
-        if (pfparticles[pfdaughter].PdgCode() == 11) {
-          auto const& shower_obj = shower_per_pfpart.at(pfdaughter);
-          bool contained_shower = false;
-          double start_point[3];
-          double end_point[3];
-
-          double shower_length = shower_obj->Length();
-          for (int ix = 0; ix < 3; ix++) {
-            start_point[ix] = shower_obj->ShowerStart()[ix];
-            end_point[ix] = shower_obj->ShowerStart()[ix]+shower_length*shower_obj->Direction()[ix];
-          }
-
-          contained_shower = is_fiducial(start_point) && is_fiducial(end_point);
-
-          if (contained_shower) showers++;
-        }
-
-        if (pfparticles[pfdaughter].PdgCode() == 13) {
-          auto const& track_obj = track_per_pfpart.at(pfdaughter);
-          if (track_obj->Length() < m_trackLength) {
-            tracks++;
-          }
-        }
-
-      } // end for pfparticle daughters
-
-      if (nu_tracks.size() > 0 && showers >= 1) {
+      if (nu_tracks.size() > 0 && nu_showers.size() > 0) {
         nu_candidates.push_back(ipf);
       }
 
@@ -448,6 +451,9 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
       }
     }
 
+    std::vector<art::Ptr<recob::Track>> chosen_tracks;
+    get_daughter_tracks(ipf_candidate, evt, chosen_tracks);
+    std::cout << "Longest track dir " << get_longest_track_dir(chosen_tracks) << std::endl;
     std::cout << "Chosen neutrino " << ipf_candidate << std::endl;
 
   } catch (...) {
