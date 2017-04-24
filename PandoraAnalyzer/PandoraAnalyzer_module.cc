@@ -220,7 +220,6 @@ art::Ptr<recob::Track> test::PandoraAnalyzer::get_longest_track(std::vector< art
   double max_length = 0;
   for (auto const& track: tracks) {
     if (track->Length() > max_length) {
-      dir = track->StartDirection().Z();
       longest_track = track;
     }
   }
