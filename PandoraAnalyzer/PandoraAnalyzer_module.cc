@@ -337,15 +337,15 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
       switch(mcparticle.PdgCode())
       {
-        case (2212):
+        case (abs(2212)):
         protons++;
         break;
 
-        case (11):
+        case (abs(11)):
         electrons++;
         break;
 
-        case (13):
+        case (abs(13)):
         muons++;
         break;
       }
@@ -425,7 +425,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
       }
     }
 
-    std::cout << "Z IPF " << most_z << " " << ipf_candidate << std::endl;
+    std::cout << "Chosen neutrino " << ipf_candidate << std::endl;
 
   } catch (...) {
     std::cout << "NO RECO DATA PRODUCTS" << std::endl;
