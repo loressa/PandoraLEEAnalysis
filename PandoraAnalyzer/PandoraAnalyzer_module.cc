@@ -126,6 +126,7 @@ private:
   void get_daughter_showers(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Shower> > &showers);
 
   double get_longest_track_dir(std::vector< art::Ptr<recob::Track> > &tracks);
+  art::Ptr<recob::Track> test::PandoraAnalyzer::get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks);
 
 };
 
@@ -211,6 +212,18 @@ double test::PandoraAnalyzer::distance(double a[3], double b[3]) {
   }
 
   return sqrt(d);
+}
+
+art::Ptr<recob::Track> test::PandoraAnalyzer::get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks) {
+  art::Ptr<recob::Track> longest_track;
+  double dir = -1;
+  for (auto const& track: tracks) {
+    if (track->Length() > max_length) {
+      dir = track->StartDirection().Z();
+      longest_track = track;
+    }
+  }
+  return longest_track;
 }
 
 double test::PandoraAnalyzer::get_longest_track_dir(std::vector< art::Ptr<recob::Track> > &tracks) {
@@ -455,7 +468,8 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
     std::vector<art::Ptr<recob::Track>> chosen_tracks;
     get_daughter_tracks(ipf_candidate, evt, chosen_tracks);
-    std::cout << "Longest track dir " << get_longest_track_dir(chosen_tracks) << std::endl;
+    std::cout << "Longest track dir " << get_longest_track(chosen_tracks)->StartDirection().Z() << std::endl;
+    //h_track_dir->Fill(get_longest_track(chosen_tracks)->StartDirection().Z());
     std::cout << "Chosen neutrino " << ipf_candidate << std::endl;
 
   } catch (...) {
