@@ -121,7 +121,7 @@ private:
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
   void measure_energy(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, const art::Event & evt, double & energy);
-  size_t test::PandoraAnalyzer::choose_candidate(std::vector<size_t> & candidates, const art::Event & evt);
+  size_t choose_candidate(std::vector<size_t> & candidates, const art::Event & evt);
 
 };
 
