@@ -210,7 +210,7 @@ double test::PandoraAnalyzer::distance(double a[3], double b[3]) {
   return sqrt(d);
 }
 
-void get_daughter_tracks(size_t ipf, const art::Event & evt, std::vector<recob::Track> &tracks) {
+void test::PandoraAnalyzer::get_daughter_tracks(size_t ipf, const art::Event & evt, std::vector<recob::Track> &tracks) {
   art::InputTag pandoraNu_tag { "pandoraNu" };
 
   auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
@@ -222,7 +222,7 @@ void get_daughter_tracks(size_t ipf, const art::Event & evt, std::vector<recob::
     if (pfparticles[pfdaughter].PdgCode() == 13) {
       auto const& track_obj = track_per_pfpart.at(pfdaughter);
       if (track_obj->Length() < m_trackLength) {
-        tracks->push_back(track_obj->ID());
+        tracks.push_back(track_obj->ID());
       }
     }
   }
@@ -243,7 +243,7 @@ void test::PandoraAnalyzer::measure_energy(size_t ipf, const art::Event & evt, d
   }
 
   for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
-    measure_energy(pfdaughter, pfparticles, evt, energy);
+    measure_energy(pfdaughter, evt, energy);
   }
 }
 
