@@ -216,7 +216,8 @@ double test::PandoraAnalyzer::distance(double a[3], double b[3]) {
 
 art::Ptr<recob::Track> test::PandoraAnalyzer::get_longest_track(std::vector< art::Ptr<recob::Track> > &tracks) {
   art::Ptr<recob::Track> longest_track;
-  double dir = -1;
+
+  double max_length = 0;
   for (auto const& track: tracks) {
     if (track->Length() > max_length) {
       dir = track->StartDirection().Z();
