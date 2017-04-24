@@ -122,7 +122,7 @@ private:
   bool is_dirt(double x[3]) const;
   void measure_energy(size_t ipf, const art::Event & evt, double & energy);
   size_t choose_candidate(std::vector<size_t> & candidates, const art::Event & evt);
-  void get_daughter_tracks(size_t ipf, const art::Event & evt, std::vector<recob::Track> &tracks);
+  void get_daughter_tracks(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Track> > &tracks);
 
 };
 
@@ -210,7 +210,7 @@ double test::PandoraAnalyzer::distance(double a[3], double b[3]) {
   return sqrt(d);
 }
 
-void test::PandoraAnalyzer::get_daughter_tracks(size_t ipf, const art::Event & evt, std::vector<recob::Track> &tracks) {
+void test::PandoraAnalyzer::get_daughter_tracks(size_t ipf, const art::Event & evt, std::vector< art::Ptr<recob::Track> > &tracks) {
   art::InputTag pandoraNu_tag { "pandoraNu" };
 
   auto const& pfparticle_handle = evt.getValidHandle< std::vector< recob::PFParticle > >( pandoraNu_tag );
@@ -380,7 +380,6 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
     art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
     art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-
 
     std::vector<size_t> nu_candidates;
 
