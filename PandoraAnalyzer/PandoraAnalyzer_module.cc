@@ -121,6 +121,7 @@ private:
   double distance(double a[3], double b[3]);
   bool is_dirt(double x[3]) const;
   void measure_energy(size_t ipf, const std::vector<recob::PFParticle> & pfparticles, const art::Event & evt, double & energy);
+  size_t test::PandoraAnalyzer::choose_candidate(std::vector<size_t> & candidates, const art::Event & evt);
 
 };
 
@@ -226,7 +227,7 @@ void test::PandoraAnalyzer::measure_energy(size_t ipf, const std::vector<recob::
   }
 }
 
-void test::PandoraAnalyzer::choose_candidate(std::vector<size_t> & candidates, const art::Event & evt) {
+size_t test::PandoraAnalyzer::choose_candidate(std::vector<size_t> & candidates, const art::Event & evt) {
 
   art::InputTag pandoraNu_tag { "pandoraNu" };
 
@@ -263,7 +264,6 @@ void test::PandoraAnalyzer::choose_candidate(std::vector<size_t> & candidates, c
   }
 
   return chosen_candidate;
-
 
 }
 
@@ -361,8 +361,6 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
     art::FindOneP< recob::Shower > shower_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
     art::FindOneP< recob::Track > track_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
 
-    int most_z_ipf = -1;
-    double most_z = -1;
 
     std::vector<size_t> nu_candidates;
 
@@ -395,7 +393,6 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
         if (pfparticles[pfdaughter].PdgCode() == 13) {
           auto const& track_obj = track_per_pfpart.at(pfdaughter);
-
           if (track_obj->Length() < m_trackLength) {
             tracks++;
           }
@@ -411,7 +408,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
     if (nu_candidates.size() == 0) return;
 
-    ipf_candidate = choose_candidate(nu_candidates, evt);
+    size_t ipf_candidate = choose_candidate(nu_candidates, evt);
 
     measure_energy(ipf_candidate, pfparticles, evt, reco_energy);
     std::cout << "Energy " << reco_energy << std::endl;
