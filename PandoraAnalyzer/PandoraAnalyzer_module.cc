@@ -38,7 +38,7 @@
 #include "canvas/Persistency/Common/FindManyP.h"
 #include "canvas/Utilities/InputTag.h"
 #include "larcore/Geometry/Geometry.h"
-
+#include "lardataobj/AnalysisBase/Calorimetry.h"
 #include "larpandora/LArPandoraInterface/LArPandoraHelper.h"
 
 #include "TTree.h"
