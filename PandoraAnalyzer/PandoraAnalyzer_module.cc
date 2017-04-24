@@ -315,7 +315,7 @@ double test::PandoraAnalyzer::trackEnergy(const art::Ptr<recob::Track>& track, c
             currentresrange = calos[ical]->ResidualRange()[iTrkHit];
             if(dedx>0 && dedx<10)
             {
-                std::cout << dedx << "\t" << currentresrange << "\t"<< prevresrange<<std::endl;
+                //std::cout << dedx << "\t" << currentresrange << "\t"<< prevresrange<<std::endl;
                 mean+=dedx;
                 E+=dedx*abs(prevresrange-currentresrange);
                 prevresrange=currentresrange;
@@ -504,7 +504,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
     size_t ipf_candidate = choose_candidate(nu_candidates, evt);
 
     measure_energy(ipf_candidate, evt, reco_energy);
-
+    std::cout << "Energy: " << reco_energy << std::endl;
     if (generator.size() > 0) {
       art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
       auto const& vertex_obj = vertex_per_pfpart.at(ipf_candidate);
