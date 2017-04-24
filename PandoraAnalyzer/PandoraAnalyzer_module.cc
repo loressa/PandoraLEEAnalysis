@@ -342,7 +342,7 @@ void test::PandoraAnalyzer::measure_energy(size_t ipf, const art::Event & evt, d
     energy += showers[ish]->Energy()[showers[ish]->best_plane()];
   }
 
-  art::FindManyP<recob::Track > track_per_pfparticle ( pfparticle_handle, evt, pandoraNu_tag );
+  art::FindManyP<recob::Track > tracks_per_pfparticle ( pfparticle_handle, evt, pandoraNu_tag );
   std::vector<art::Ptr<recob::Track>> tracks = tracks_per_pfparticle.at(ipf);
 
   for(size_t itr = 0; itr < tracks.size(); itr++) {
