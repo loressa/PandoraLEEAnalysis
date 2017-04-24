@@ -415,7 +415,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
 
     if (generator.size() > 0) {
       art::FindOneP< recob::Vertex > vertex_per_pfpart(pfparticle_handle, evt, pandoraNu_tag);
-      auto const& vertex_obj = vertex_per_pfpart.at(most_z_ipf);
+      auto const& vertex_obj = vertex_per_pfpart.at(ipf_candidate);
 
       double reco_neutrino_vertex[3];
       vertex_obj->XYZ(reco_neutrino_vertex);
@@ -425,7 +425,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
       }
     }
 
-    std::cout << "Z IPF " << most_z << " " << most_z_ipf << std::endl;
+    std::cout << "Z IPF " << most_z << " " << ipf_candidate << std::endl;
 
   } catch (...) {
     std::cout << "NO RECO DATA PRODUCTS" << std::endl;
