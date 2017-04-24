@@ -391,7 +391,7 @@ void test::PandoraAnalyzer::analyze(art::Event const & evt)
       int showers = 0;
       int tracks = 0;
 
-      std::vector<recob::Track> nu_tracks;
+      std::vector<art::Ptr<recob::Track>> nu_tracks;
       get_daughter_tracks(ipf, evt, nu_tracks);
 
       for (auto const& pfdaughter: pfparticles[ipf].Daughters()) {
