@@ -17,6 +17,8 @@ services :
   UBOpReadoutMap:           @local::microboone_opreadoutmap
   DetectorClocksService:            @local::microboone_detectorclocks
   DatabaseUtil:           @local::microboone_database
+        ExptGeoHelperInterface:         @local::microboone_geometry_helper
+        Geometry:                       @local::microboone_geo
 
   message:      @local::standard_info
 

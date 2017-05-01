@@ -6,8 +6,8 @@ defaultqual e10
 fcldir product_dir job
 #
 product         version
-larsim		v05_13_00
-gcc		v4_9_3
+larsim		v06_13_01
+gcc		v4_9_3a
 
 cetbuildtools	v4_19_04	-	only_for_build
 end_product_list
@@ -15,9 +15,9 @@ end_product_list
   
 # e9  - with gcc 4.9.3 and -std=c++14
 qualifier	larsim		gcc	notes
-e10:debug	e9:debug	-nq-
-e10:opt		e9:opt		-nq-
-e10:prof	e9:prof		-nq-
+e10:debug	e10:debug	-nq-
+e10:opt		e10:opt		-nq-
+e10:prof	e10:prof		-nq-
 end_qualifier_list
 
 # Preserve tabs and formatting in emacs and vi / vim:
